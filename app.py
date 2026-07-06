@@ -2121,7 +2121,7 @@ Arquitecturas evaluadas:
         
         if st.sidebar.button("🧹 Limpiar Caché y Recargar Modelos"):
             st.cache_resource.clear()
-            st.rerun()
+            st.experimental_rerun()
             
         with tab1:
             # Botón para limpiar análisis
@@ -2130,7 +2130,7 @@ Arquitecturas evaluadas:
                 st.session_state.predicciones = None
                 st.session_state.imagen_analisis = None
                 st.session_state.marca_tiempo_analisis = None
-                st.rerun()
+                st.experimental_rerun()
             
             # Mostrar características
             self.mostrar_vitrina_arquitecturas()
@@ -2145,7 +2145,7 @@ Arquitecturas evaluadas:
                 if st.session_state.imagen_analisis:
                     col1, col2, col3 = st.columns([1, 2, 1])
                     with col2:
-                        st.image(st.session_state.imagen_analisis, caption="Imagen analizada", use_container_width=True)
+                        st.image(st.session_state.imagen_analisis, caption="Imagen analizada", use_column_width=True)
                 
                 # Mostrar todos los resultados usando el estado guardado
                 predicciones = st.session_state.predicciones
@@ -2202,7 +2202,7 @@ Arquitecturas evaluadas:
                     col1, col2, col3 = st.columns([1, 2, 1])
                     with col2:
                         imagen = Image.open(archivo_subido)
-                        st.image(imagen, caption="Imagen para la batalla", use_container_width=True)
+                        st.image(imagen, caption="Imagen para la batalla", use_column_width=True)
                     
                     # Botón de análisis
                     if st.button("🚀 INICIAR BATALLA DE ARQUITECTURAS", type="primary", use_container_width=True):
@@ -2248,7 +2248,7 @@ Arquitecturas evaluadas:
                                 st.session_state.analisis_completado = True
                                 
                                 # Forzar rerun para mostrar resultados
-                                st.rerun()
+                                st.experimental_rerun()
                             
                             else:
                                 st.error("❌ Error en las predicciones")
