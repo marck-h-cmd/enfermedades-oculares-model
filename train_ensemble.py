@@ -7,12 +7,24 @@ import pandas as pd
 
 import tensorflow as tf
 from keras import layers, Model
-from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.applications import MobileNetV2, EfficientNetB0, ResNet50V2
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 import warnings
 warnings.filterwarnings('ignore')
+
+import tensorflow as tf
+import sys
+if not tf.config.list_physical_devices('GPU'):
+    print("❌ ERROR CRÍTICO: No se detectó ninguna GPU compatible. Por regla estricta, el entrenamiento requiere GPU.")
+    print("Si estás en Windows nativo con Python 3.13, TensorFlow no soporta GPU. Usa WSL2 o Python 3.10 con DirectML.")
+    sys.exit(1)
+else:
+    # Desactivamos mixed_precision en el Ensemble porque causa un bug fatal de serialización JSON 
+    # (<class 'EagerTensor'>) con las capas internas de EfficientNet en TF 2.10.
+    print("⚡ [Optimizador GPU] Precisión normal activada para evitar bug de EfficientNet en TF 2.10.")
+    pass
 
 class EnsembleMedico:
     """
@@ -28,52 +40,44 @@ class EnsembleMedico:
     def __init__(self):
         # Mapeo de clases (igual que tu código original)
         self.informacion_clases = {
-            'Central Serous Chorioretinopathy [Color Fundus]': {
-                'nombre': 'Corioretinopatía Serosa Central',
-                'descripcion': 'Acumulación de líquido bajo la retina que causa visión borrosa'
+            'ageDegeneration': {
+                'nombre': 'Degeneración Macular (AMD)',
+                'descripcion': 'Deterioro de la mácula afectando la visión central'
             },
-            'Diabetic Retinopathy': {
+            'cataract': {
+                'nombre': 'Catarata',
+                'descripcion': 'Opacidad del cristalino del ojo'
+            },
+            'diabetes': {
                 'nombre': 'Retinopatía Diabética',
                 'descripcion': 'Daño a los vasos sanguíneos de la retina por diabetes'
             },
-            'Disc Edema': {
-                'nombre': 'Edema del Disco Óptico',
-                'descripcion': 'Hinchazón del disco óptico por aumento de presión intracraneal'
-            },
-            'Glaucoma': {
+            'glaucoma': {
                 'nombre': 'Glaucoma',
                 'descripcion': 'Daño al nervio óptico, generalmente por presión ocular alta'
             },
-            'Healthy': {
-                'nombre': 'Ojo Sano',
-                'descripcion': 'Retina sin patologías evidentes'
+            'hypertension': {
+                'nombre': 'Retinopatía Hipertensiva',
+                'descripcion': 'Daño vascular retiniano por hipertensión'
             },
-            'Macular Scar': {
-                'nombre': 'Cicatriz Macular',
-                'descripcion': 'Tejido cicatricial en la mácula que afecta la visión central'
-            },
-            'Myopia': {
+            'myopia': {
                 'nombre': 'Miopía',
                 'descripcion': 'Error refractivo que causa dificultad para ver objetos lejanos'
             },
-            'Pterygium': {
-                'nombre': 'Pterigión',
-                'descripcion': 'Crecimiento anormal de tejido sobre la córnea'
+            'normal': {
+                'nombre': 'Ojo Sano',
+                'descripcion': 'Retina sin patologías evidentes'
             },
-            'Retinal Detachment': {
-                'nombre': 'Desprendimiento de Retina',
-                'descripcion': 'Separación de la retina de la pared posterior del ojo'
-            },
-            'Retinitis Pigmentosa': {
-                'nombre': 'Retinitis Pigmentosa',
-                'descripcion': 'Degeneración progresiva de la retina'
+            'others': {
+                'nombre': 'Otras Patologías',
+                'descripcion': 'Anomalías no clasificadas en otras categorías'
             }
         }
         
         # Configuración
         self.alto_img = 224
         self.ancho_img = 224
-        self.tamaño_lote = 32
+        self.tamaño_lote = 64
         self.division_validacion = 0.2
         
         print("🤖 ENSEMBLE MÉDICO DE CNNs")
@@ -231,7 +235,7 @@ class EnsembleMedico:
                 verbose=1
             ),
             ModelCheckpoint(
-                f'{arquitectura}_individual_model.h5',
+                f'{arquitectura}_individual_model',
                 monitor='val_accuracy',
                 save_best_only=True,
                 verbose=1
@@ -358,7 +362,7 @@ class EnsembleMedico:
         
         # Guardar modelos
         for i, arq in enumerate(arquitecturas):
-            modelos[i].save(f'ensemble_{arq}_model.h5')
+            modelos[i].save(f'ensemble_{arq}_model')
         
         # Guardar información del ensemble
         np.save('ensemble_class_indices.npy', gen_entrenamiento.class_indices)
@@ -439,7 +443,7 @@ class EnsembleMedico:
         
         plt.tight_layout()
         plt.savefig('ensemble_medical_results.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        # plt.show()  # COMENTADO PARA EVITAR QUE EL SCRIPT SE QUEDE BLOQUEADO EN SEGUNDO PLANO
 
 def principal_ensemble():
     """Función principal para ensemble"""
@@ -470,7 +474,7 @@ def principal_ensemble():
         print("   CNN Individual:    70.44% accuracy")
         print(f"   Ensemble de CNNs:   {precision_ensemble:.2%} accuracy")
         print("\n✅ Dos enfoques completamente diferentes probados")
-        print("📁 Modelos guardados: ensemble_[arquitectura]_model.h5")
+        print("📁 Modelos guardados: ensemble_[arquitectura]_model")
         
     except Exception as e:
         print(f"\n❌ Error durante ensemble: {str(e)}")

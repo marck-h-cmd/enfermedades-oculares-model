@@ -39,31 +39,31 @@ class AplicacionTresArquitecturas:
     def __init__(self):
         # Tu código existente de __init__ aquí...
         self.informacion_clases = {
-            'Central Serous Chorioretinopathy [Color Fundus]': {
-                'nombre': 'Corioretinopatía Serosa Central',
-                'descripcion': 'Acumulación de líquido bajo la retina',
-                'gravedad': 'Moderada',
-                'color': '#FFA07A',
-                'tratamiento': 'Observación, láser focal en casos persistentes',
-                'pronostico': 'Bueno, resolución espontánea en 80% casos'
+            'ageDegeneration': {
+                'nombre': 'Degeneración Macular (AMD)',
+                'descripcion': 'Deterioro de la mácula afectando la visión central',
+                'gravedad': 'Alta',
+                'color': '#DAA520',
+                'tratamiento': 'Inyecciones anti-VEGF, vitaminas, láser',
+                'pronostico': 'Variable, tratamientos pueden retrasar la progresión'
             },
-            'Diabetic Retinopathy': {
-                'nombre': 'Retinopatía Diabética', 
+            'cataract': {
+                'nombre': 'Catarata',
+                'descripcion': 'Opacidad del cristalino del ojo',
+                'gravedad': 'Moderada',
+                'color': '#A9A9A9',
+                'tratamiento': 'Cirugía de reemplazo de cristalino',
+                'pronostico': 'Excelente tras cirugía'
+            },
+            'diabetes': {
+                'nombre': 'Retinopatía Diabética',
                 'descripcion': 'Daño vascular por diabetes',
                 'gravedad': 'Alta',
                 'color': '#FF6B6B',
                 'tratamiento': 'Control glucémico, inyecciones intravítreas, láser',
                 'pronostico': 'Manejo temprano previene ceguera'
             },
-            'Disc Edema': {
-                'nombre': 'Edema del Disco Óptico',
-                'descripcion': 'Hinchazón por presión intracraneal',
-                'gravedad': 'Alta',
-                'color': '#FF4444',
-                'tratamiento': 'Urgente: reducir presión intracraneal',
-                'pronostico': 'Depende de causa subyacente'
-            },
-            'Glaucoma': {
+            'glaucoma': {
                 'nombre': 'Glaucoma',
                 'descripcion': 'Daño del nervio óptico',
                 'gravedad': 'Alta',
@@ -71,23 +71,15 @@ class AplicacionTresArquitecturas:
                 'tratamiento': 'Gotas hipotensoras, láser, cirugía',
                 'pronostico': 'Progresión lenta con tratamiento'
             },
-            'Healthy': {
-                'nombre': 'Ojo Sano',
-                'descripcion': 'Sin patologías detectadas',
-                'gravedad': 'Normal',
-                'color': '#32CD32',
-                'tratamiento': 'Exámenes preventivos anuales',
-                'pronostico': 'Excelente'
-            },
-            'Macular Scar': {
-                'nombre': 'Cicatriz Macular',
-                'descripcion': 'Tejido cicatricial en mácula',
+            'hypertension': {
+                'nombre': 'Retinopatía Hipertensiva',
+                'descripcion': 'Daño vascular retiniano por hipertensión',
                 'gravedad': 'Moderada',
-                'color': '#DAA520',
-                'tratamiento': 'Rehabilitación visual, ayudas ópticas',
-                'pronostico': 'Estable, visión central afectada'
+                'color': '#FFA500',
+                'tratamiento': 'Control estricto de la presión arterial',
+                'pronostico': 'Favorable con control sistémico'
             },
-            'Myopia': {
+            'myopia': {
                 'nombre': 'Miopía',
                 'descripcion': 'Error refractivo',
                 'gravedad': 'Leve',
@@ -95,29 +87,21 @@ class AplicacionTresArquitecturas:
                 'tratamiento': 'Lentes correctivos, cirugía refractiva',
                 'pronostico': 'Excelente con corrección'
             },
-            'Pterygium': {
-                'nombre': 'Pterigión',
-                'descripcion': 'Crecimiento anormal en córnea',
-                'gravedad': 'Leve',
-                'color': '#DDA0DD',
-                'tratamiento': 'Observación, cirugía si afecta visión',
-                'pronostico': 'Bueno, puede recurrir post-cirugía'
+            'normal': {
+                'nombre': 'Ojo Sano',
+                'descripcion': 'Sin patologías detectadas',
+                'gravedad': 'Normal',
+                'color': '#32CD32',
+                'tratamiento': 'Exámenes preventivos anuales',
+                'pronostico': 'Excelente'
             },
-            'Retinal Detachment': {
-                'nombre': 'Desprendimiento de Retina',
-                'descripcion': 'Emergencia: separación retinal',
-                'gravedad': 'Crítica',
-                'color': '#B22222',
-                'tratamiento': 'URGENTE: cirugía inmediata',
-                'pronostico': 'Bueno si se trata en <24-48h'
-            },
-            'Retinitis Pigmentosa': {
-                'nombre': 'Retinitis Pigmentosa',
-                'descripcion': 'Degeneración progresiva',
-                'gravedad': 'Alta',
-                'color': '#8B0000',
-                'tratamiento': 'Suplementos, implantes retinales',
-                'pronostico': 'Progresivo, investigación activa'
+            'others': {
+                'nombre': 'Otras Patologías',
+                'descripcion': 'Anomalías no clasificadas en otras categorías',
+                'gravedad': 'Variable',
+                'color': '#9370DB',
+                'tratamiento': 'Requiere evaluación médica especializada',
+                'pronostico': 'Depende del diagnóstico específico'
             }
         }
         
@@ -178,15 +162,24 @@ class AplicacionTresArquitecturas:
             
             # Mapeo de archivos a arquitecturas
             archivos_modelos = {
-                'CNN_Original': 'eye_disease_model.h5',
-                'EfficientNetB0': 'ensemble_efficientnet_model.h5', 
-                'ResNet50V2': 'ensemble_resnet_model.h5'
+                'CNN_Original': 'eye_disease_model',
+                'EfficientNetB0': 'ensemble_efficientnet_model', 
+                'ResNet50V2': 'ensemble_resnet_model'
             }
             
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            
             for nombre_arq, nombre_archivo in archivos_modelos.items():
-                if os.path.exists(nombre_archivo):
-                    modelos[nombre_arq] = tf.keras.models.load_model(nombre_archivo)
-                    st.success(f"✅ {nombre_arq} cargado correctamente")
+                ruta_absoluta = os.path.join(base_dir, nombre_archivo)
+                if os.path.exists(ruta_absoluta):
+                    try:
+                        modelos[nombre_arq] = tf.keras.models.load_model(ruta_absoluta)
+                        st.success(f"✅ {nombre_arq} cargado correctamente")
+                    except Exception as e:
+                        if 'Unrecognized keyword arguments' in str(e):
+                            st.warning(f"⚠️ {nombre_arq} fue creado con Keras 3. Por favor, re-entrénalo.")
+                        else:
+                            st.error(f"❌ Error al cargar {nombre_arq}: {e}")
                 else:
                     st.warning(f"⚠️ No se encontró {nombre_archivo}")
             
@@ -210,8 +203,8 @@ class AplicacionTresArquitecturas:
             return modelos, nombres_clases_conjunto, nombres_clases_individuales
             
         except Exception as e:
-            st.error(f"Error cargando modelos: {str(e)}")
-            return {}, {}, {}
+            st.error(f"Error general cargando modelos: {str(e)}")
+            return modelos, {}, {}
     
     def preprocesar_imagen(self, imagen):
         """Preprocesa imagen para predicción"""
@@ -2037,16 +2030,99 @@ Arquitecturas evaluadas:
             with st.spinner("🔄 Cargando las 3 arquitecturas..."):
                 self.modelos, self.nombres_clases, self.nombres_clases_individuales = self.cargar_modelos()
         
-        if len(self.modelos) < 2:
-            st.error("❌ Se necesitan al menos 2 modelos para comparar")
-            st.stop()
+        # Pestañas principales
+        tab1, tab2, tab3 = st.tabs(["🔬 Análisis Individual", "📊 Evaluación Estadística", "⚙️ Entrenamiento"])
         
+        with tab3:
+            st.header("⚙️ Entrenamiento de Modelos Reales")
+            st.write("Entrena los modelos directamente sobre la carpeta `Dataset` con GPU.")
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("1. CNN Original")
+                st.write("Entrena el modelo base (eye_disease_model).")
+                if st.button("🚀 Entrenar CNN Original", type="primary"):
+                    import subprocess
+                    import sys
+                    import os
+                    st.info("Entrenando CNN Original...")
+                    log_container = st.empty()
+                    try:
+                        custom_env = os.environ.copy()
+                        custom_env["PYTHONIOENCODING"] = "utf-8"
+                        custom_env["PYTHONUNBUFFERED"] = "1"
+                        
+                        process = subprocess.Popen(
+                            [sys.executable, 'train_model.py'], 
+                            stdout=subprocess.PIPE, 
+                            stderr=subprocess.STDOUT,
+                            text=True,
+                            encoding='utf-8',
+                            bufsize=1,
+                            env=custom_env
+                        )
+                        log_text = ""
+                        for line in iter(process.stdout.readline, ''):
+                            log_text += line
+                            lineas_cortadas = "\n".join(log_text.split("\n")[-30:])
+                            log_container.code(lineas_cortadas)
+                        process.wait()
+                        if process.returncode == 0:
+                            st.cache_resource.clear()
+                            st.success("✅ Modelo CNN Original guardado. ¡Refresca la página para usarlo!")
+                        else:
+                            st.error(f"❌ Error (Código {process.returncode})")
+                    except Exception as e:
+                        st.error(f"Error lanzando proceso: {e}")
+                        
+            with col2:
+                st.subheader("2. Ensemble (EfficientNet + ResNet)")
+                st.write("Entrena los dos modelos pesados. Requiere el modelo base primero.")
+                if st.button("🚀 Entrenar Ensemble", type="primary"):
+                    import subprocess
+                    import sys
+                    import os
+                    st.info("Entrenando Ensemble (Esto tomará bastante tiempo)...")
+                    log_container = st.empty()
+                    try:
+                        custom_env = os.environ.copy()
+                        custom_env["PYTHONIOENCODING"] = "utf-8"
+                        custom_env["PYTHONUNBUFFERED"] = "1"
+                        
+                        process_ens = subprocess.Popen(
+                            [sys.executable, 'train_ensemble.py'], 
+                            stdout=subprocess.PIPE, 
+                            stderr=subprocess.STDOUT,
+                            text=True,
+                            encoding='utf-8',
+                            bufsize=1,
+                            env=custom_env
+                        )
+                        log_text_ens = ""
+                        for line in iter(process_ens.stdout.readline, ''):
+                            log_text_ens += line
+                            lineas_cortadas = "\n".join(log_text_ens.split("\n")[-30:])
+                            log_container.code(lineas_cortadas)
+                        process_ens.wait()
+                        if process_ens.returncode == 0:
+                            st.cache_resource.clear()
+                            st.success("🎉 ¡Modelos de Ensemble guardados! Refresca la página.")
+                        else:
+                            st.error(f"❌ Error en el entrenamiento del Ensemble (Código {process_ens.returncode})")
+                    except Exception as e:
+                        st.error(f"❌ Ocurrió un error al lanzar el proceso: {e}")
+
+        if len(self.modelos) < 3:
+            st.warning("⚠️ Faltan algunos modelos. Ve a la pestaña '⚙️ Entrenamiento' para generarlos.")
+
+            
         # Info en sidebar
         st.sidebar.success(f"✅ {len(self.modelos)} arquitecturas cargadas")
         
-        # Pestañas principales
-        tab1, tab2 = st.tabs(["🔬 Análisis Individual", "📊 Evaluación Estadística"])
-        
+        if st.sidebar.button("🧹 Limpiar Caché y Recargar Modelos"):
+            st.cache_resource.clear()
+            st.rerun()
+            
         with tab1:
             # Botón para limpiar análisis
             if st.sidebar.button("🔄 Nuevo Análisis", help="Limpia el análisis actual"):
@@ -2106,7 +2182,6 @@ Arquitecturas evaluadas:
                         }
                         for pred in predicciones
                     ])
-                    
                     st.dataframe(df_resumen, use_container_width=True)
                 
                 # Timestamp
@@ -2181,6 +2256,8 @@ Arquitecturas evaluadas:
         with tab2:
             # NUEVA PESTAÑA: ANÁLISIS ESTADÍSTICO
             self.mostrar_seccion_analisis_estadistico()
+        
+
         
         # Footer técnico (expandido)
         st.markdown("---")

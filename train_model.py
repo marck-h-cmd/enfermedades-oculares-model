@@ -8,63 +8,70 @@ import pandas as pd
 # Importaciones modernas de TensorFlow
 import tensorflow as tf
 from keras import layers
-from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from keras.applications import MobileNetV2
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 import warnings
 warnings.filterwarnings('ignore')
 
+import tensorflow as tf
+import sys
+if not tf.config.list_physical_devices('GPU'):
+    print("❌ ERROR CRÍTICO: No se detectó ninguna GPU compatible. Por regla estricta, el entrenamiento requiere GPU.")
+    print("Si estás en Windows nativo con Python 3.13, TensorFlow no soporta GPU. Usa WSL2 o Python 3.10 con DirectML.")
+    sys.exit(1)
+else:
+    # Habilitar mixed precision para exprimir la RTX 3050 (hace el entrenamiento más rápido y usa menos VRAM)
+    try:
+        from tensorflow.keras import mixed_precision
+        mixed_precision.set_global_policy('mixed_float16')
+        print("⚡ [Optimizador GPU] Política de precisión mixta (float16) activada. ¡Máxima velocidad!")
+    except Exception as e:
+        print(f"No se pudo activar mixed precision: {e}")
+
 class EntrenadorEnfermedadesOculares:
     def __init__(self):
         # Mapeo de clases en español
         self.informacion_clases = {
-            'Central Serous Chorioretinopathy [Color Fundus]': {
-                'nombre': 'Corioretinopatía Serosa Central',
-                'descripcion': 'Acumulación de líquido bajo la retina que causa visión borrosa'
+            'ageDegeneration': {
+                'nombre': 'Degeneración Macular (AMD)',
+                'descripcion': 'Deterioro de la mácula afectando la visión central'
             },
-            'Diabetic Retinopathy': {
+            'cataract': {
+                'nombre': 'Catarata',
+                'descripcion': 'Opacidad del cristalino del ojo'
+            },
+            'diabetes': {
                 'nombre': 'Retinopatía Diabética',
                 'descripcion': 'Daño a los vasos sanguíneos de la retina por diabetes'
             },
-            'Disc Edema': {
-                'nombre': 'Edema del Disco Óptico',
-                'descripcion': 'Hinchazón del disco óptico por aumento de presión intracraneal'
-            },
-            'Glaucoma': {
+            'glaucoma': {
                 'nombre': 'Glaucoma',
                 'descripcion': 'Daño al nervio óptico, generalmente por presión ocular alta'
             },
-            'Healthy': {
-                'nombre': 'Ojo Sano',
-                'descripcion': 'Retina sin patologías evidentes'
+            'hypertension': {
+                'nombre': 'Retinopatía Hipertensiva',
+                'descripcion': 'Daño vascular retiniano por hipertensión'
             },
-            'Macular Scar': {
-                'nombre': 'Cicatriz Macular',
-                'descripcion': 'Tejido cicatricial en la mácula que afecta la visión central'
-            },
-            'Myopia': {
+            'myopia': {
                 'nombre': 'Miopía',
                 'descripcion': 'Error refractivo que causa dificultad para ver objetos lejanos'
             },
-            'Pterygium': {
-                'nombre': 'Pterigión',
-                'descripcion': 'Crecimiento anormal de tejido sobre la córnea'
+            'normal': {
+                'nombre': 'Ojo Sano',
+                'descripcion': 'Retina sin patologías evidentes'
             },
-            'Retinal Detachment': {
-                'nombre': 'Desprendimiento de Retina',
-                'descripcion': 'Separación de la retina de la pared posterior del ojo'
-            },
-            'Retinitis Pigmentosa': {
-                'nombre': 'Retinitis Pigmentosa',
-                'descripcion': 'Degeneración progresiva de la retina'
+            'others': {
+                'nombre': 'Otras Patologías',
+                'descripcion': 'Anomalías no clasificadas en otras categorías'
             }
         }
         
         # Configuración del modelo
         self.alto_img = 224
         self.ancho_img = 224
-        self.tamaño_lote = 64
+        self.tamaño_lote = 128
         self.division_validacion = 0.15
         
     def analizar_dataset(self, ruta_dataset):
@@ -196,7 +203,7 @@ class EntrenadorEnfermedadesOculares:
         
         return modelo
     
-    def entrenar_modelo(self, ruta_dataset, epocas=20, ruta_guardado='eye_disease_model.h5'):
+    def entrenar_modelo(self, ruta_dataset, epocas=20, ruta_guardado='eye_disease_model'):
         """Entrena el modelo completo"""
         print("🚀 Iniciando entrenamiento...")
         print("=" * 50)
@@ -244,7 +251,8 @@ class EntrenadorEnfermedadesOculares:
             verbose=1
         )
         
-        # Guardar clases para la aplicación principal
+        # Guardar modelo final y diccionarios
+        modelo.save(ruta_guardado)
         indices_clases = gen_entrenamiento.class_indices
         np.save('class_indices.npy', indices_clases)
         
@@ -304,8 +312,8 @@ class EntrenadorEnfermedadesOculares:
                            ha='center', va='center', transform=axes[1, 1].transAxes)
         
         plt.tight_layout()
-        plt.savefig('training_results.png', dpi=300, bbox_inches='tight')
-        plt.show()
+        plt.savefig('medical_training_results.png', dpi=300, bbox_inches='tight')
+        # plt.show()  # COMENTADO PARA EVITAR QUE EL SCRIPT SE QUEDE BLOQUEADO EN SEGUNDO PLANO
         
         # Mostrar métricas finales
         precision_final = historial.history['val_accuracy'][-1]
@@ -354,7 +362,7 @@ def principal():
     # Configuración
     RUTA_DATASET = "./Dataset"  # Cambia esta ruta si es necesario
     EPOCAS = 25
-    NOMBRE_MODELO = "eye_disease_model.h5"
+    NOMBRE_MODELO = "eye_disease_model"
     
     # Verificar que existe el dataset
     if not os.path.exists(RUTA_DATASET):
