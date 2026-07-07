@@ -1,0 +1,27 @@
+{
+  "zh": {
+    "confidence": "MISSING",
+    "technical_metrics": "MISSING",
+    "prediction_results": "MISSING"
+  },
+  "pt": {
+    "confidence": "🎯 Confiança",
+    "technical_metrics": "**📊 Métricas Técnicas:**",
+    "prediction_results": "MISSING"
+  },
+  "fr": {
+    "confidence": "🎯 Confiance",
+    "technical_metrics": "**📊 Métriques Techniques:**",
+    "prediction_results": "MISSING"
+  },
+  "en": {
+    "confidence": "🎯 Confidence",
+    "technical_metrics": "**📊 Technical Metrics:**",
+    "prediction_results": "MISSING"
+  },
+  "es": {
+    "confidence": "🎯 Confianza",
+    "technical_metrics": "**📊 Métricas Técnicas:**",
+    "prediction_results": "MISSING"
+  }
+}

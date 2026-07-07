@@ -1,0 +1,246 @@
+[
+  [
+    397,
+    "No se encontraron carpetas de clases en el dataset"
+  ],
+  [
+    441,
+    "El archivo CSV debe contener columnas 'ruta_imagen' y 'etiqueta_verdadera'"
+  ],
+  [
+    570,
+    "---"
+  ],
+  [
+    572,
+    "\n        **Evaluación rigurosa con pruebas estadísticas:**\n        - 🎯 **Coeficiente de Matthews (MCC)**: Métrica balanceada que considera todos los casos de la matriz de confusión\n        - 🔬 **Prueba de McNemar**: Comparación estadística entre pares de modelos\n        - 📈 **Intervalos de Confianza**: Bootstrap CI para robustez estadística\n        "
+  ],
+  [
+    583,
+    "value=Pruebas"
+  ],
+  [
+    620,
+    "key=vista_previa_dataset"
+  ],
+  [
+    625,
+    "#### 📊 Resumen del Dataset:"
+  ],
+  [
+    634,
+    "**📈 Distribución por Clase:**"
+  ],
+  [
+    654,
+    "type=primary"
+  ],
+  [
+    654,
+    "key=eval_carpeta"
+  ],
+  [
+    655,
+    "🔄 Evaluando modelos en dataset completo... Esto puede tomar varios minutos."
+  ],
+  [
+    661,
+    "✅ Evaluación completada! Realizando análisis estadístico..."
+  ],
+  [
+    676,
+    "**💡 Sugerencias:**"
+  ],
+  [
+    677,
+    "• Verifica que la ruta sea correcta"
+  ],
+  [
+    678,
+    "• Usa rutas relativas como `Pruebas` o `./Pruebas`"
+  ],
+  [
+    679,
+    "• O rutas absolutas como `/ruta/completa/Pruebas`"
+  ],
+  [
+    683,
+    "---"
+  ],
+  [
+    684,
+    "📊 Mostrando resultados de análisis estadístico previo"
+  ],
+  [
+    698,
+    "🎯 Coeficiente de Correlación de Matthews (MCC)"
+  ],
+  [
+    700,
+    "\n        **MCC** es una métrica balanceada que funciona bien incluso con clases desbalanceadas.\n        - **Rango**: -1 (completamente incorrecto) a +1 (predicción perfecta)\n        - **0**: Predicción aleatoria\n        - **>0.5**: Excelente rendimiento\n        "
+  ],
+  [
+    763,
+    "🔬 Pruebas de McNemar - Comparación entre Modelos"
+  ],
+  [
+    765,
+    "\n        **Prueba de McNemar** compara estadísticamente el rendimiento entre pares de modelos:\n        - **H₀**: No hay diferencia entre los modelos\n        - **H₁**: Hay diferencia significativa\n        - **α = 0.05**: Nivel de significancia\n        "
+  ],
+  [
+    793,
+    "🎭 Matrices de Confusión por Arquitectura"
+  ],
+  [
+    803,
+    "📈 Análisis de Significancia Estadística"
+  ],
+  [
+    831,
+    "💡 Recomendaciones Estadísticas"
+  ],
+  [
+    834,
+    "\n            ⚠️ **No se encontraron diferencias estadísticamente significativas** entre los modelos.\n            \n            **Implicaciones:**\n            - Los modelos tienen rendimiento similar estadísticamente\n            - Otros criterios (velocidad, tamaño) pueden ser decisivos\n            - Se recomienda aumentar el tamaño del dataset de prueba\n            "
+  ],
+  [
+    854,
+    "📤 Exportar Resultados Estadísticos"
+  ],
+  [
+    856,
+    "📊 Generar Reporte Estadístico Completo"
+  ],
+  [
+    1021,
+    "✅ Reportes estadísticos generados correctamente!"
+  ],
+  [
+    1179,
+    "---"
+  ],
+  [
+    1209,
+    "---"
+  ],
+  [
+    1245,
+    "---"
+  ],
+  [
+    1249,
+    "## 📊 ANÁLISIS COMPARATIVO DE RENDIMIENTO"
+  ],
+  [
+    1350,
+    "### 🕸️ Comparación Multidimensional"
+  ],
+  [
+    1443,
+    "## 🔬 ANÁLISIS DETALLADO"
+  ],
+  [
+    1473,
+    "### 📋 Fortalezas y Debilidades"
+  ],
+  [
+    1527,
+    "### 💡 RECOMENDACIONES DE USO"
+  ],
+  [
+    1532,
+    "\n            **🏥 Aplicaciones Clínicas:**\n            - Usa el modelo con **mayor confianza**\n            - Prioriza precisión sobre velocidad\n            - Ideal para diagnósticos complejos\n            "
+  ],
+  [
+    1540,
+    "\n            **📱 Aplicaciones Móviles:**\n            - Usa el modelo **más rápido y ligero**\n            - Balance entre precisión y recursos\n            - Ideal para apps en tiempo real\n            "
+  ],
+  [
+    1548,
+    "\n            **🔄 Sistemas de Producción:**\n            - Usa el modelo **más eficiente**\n            - Considera el volumen de procesamiento\n            - Ideal para escalabilidad\n            "
+  ],
+  [
+    1856,
+    "---"
+  ],
+  [
+    1897,
+    "### 📤 Exportar Análisis"
+  ],
+  [
+    1902,
+    "type=primary"
+  ],
+  [
+    1902,
+    "key=boton_pdf"
+  ],
+  [
+    1936,
+    "key=boton_json"
+  ],
+  [
+    1969,
+    "key=boton_csv"
+  ],
+  [
+    2007,
+    "---"
+  ],
+  [
+    2008,
+    "\n        💡 **Información sobre las descargas:**\n        - **PDF**: Reporte completo con análisis clínico y recomendaciones técnicas\n        - **JSON**: Datos técnicos estructurados para análisis posterior \n        - **CSV**: Tabla comparativa simple para Excel/análisis estadístico\n        \n        📁 Los archivos se descargan automáticamente a tu carpeta de Descargas\n        "
+  ],
+  [
+    2054,
+    "---"
+  ],
+  [
+    2076,
+    "type=primary"
+  ],
+  [
+    2077,
+    "Entrenando CNN Original..."
+  ],
+  [
+    2115,
+    "type=primary"
+  ],
+  [
+    2116,
+    "Entrenando Ensemble (Esto tomará bastante tiempo)..."
+  ],
+  [
+    2172,
+    "---"
+  ],
+  [
+    2188,
+    "---"
+  ],
+  [
+    2190,
+    "---"
+  ],
+  [
+    2194,
+    "---"
+  ],
+  [
+    2196,
+    "---"
+  ],
+  [
+    2222,
+    "---"
+  ],
+  [
+    2242,
+    "type=primary"
+  ],
+  [
+    2297,
+    "---"
+  ]
+]

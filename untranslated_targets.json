@@ -1,0 +1,212 @@
+[
+  {
+    "old": "Entrenando Ensemble (Esto tomará bastante tiempo)...",
+    "key": "ui_entrenando_ensemble_esto_tomar",
+    "start": 28,
+    "lineno": 2116
+  },
+  {
+    "old": "Entrenando CNN Original...",
+    "key": "ui_entrenando_cnn_original",
+    "start": 28,
+    "lineno": 2077
+  },
+  {
+    "old": "\n        💡 **Información sobre las descargas:**\n        - **PDF**: Reporte completo con análisis clínico y recomendaciones técnicas\n        - **JSON**: Datos técnicos estructurados para análisis posterior \n        - **CSV**: Tabla comparativa simple para Excel/análisis estadístico\n        \n        📁 Los archivos se descargan automáticamente a tu carpeta de Descargas\n        ",
+    "key": "ui_informacin_sobre_las_descargas",
+    "start": 16,
+    "lineno": 2008
+  },
+  {
+    "old": "### 📤 Exportar Análisis",
+    "key": "ui_exportar_anlisis",
+    "start": 20,
+    "lineno": 1897
+  },
+  {
+    "old": "\n            **🔄 Sistemas de Producción:**\n            - Usa el modelo **más eficiente**\n            - Considera el volumen de procesamiento\n            - Ideal para escalabilidad\n            ",
+    "key": "ui_sistemas_de_produccin_usa",
+    "start": 24,
+    "lineno": 1548
+  },
+  {
+    "old": "\n            **📱 Aplicaciones Móviles:**\n            - Usa el modelo **más rápido y ligero**\n            - Balance entre precisión y recursos\n            - Ideal para apps en tiempo real\n            ",
+    "key": "ui_aplicaciones_mviles_usa_el",
+    "start": 24,
+    "lineno": 1540
+  },
+  {
+    "old": "\n            **🏥 Aplicaciones Clínicas:**\n            - Usa el modelo con **mayor confianza**\n            - Prioriza precisión sobre velocidad\n            - Ideal para diagnósticos complejos\n            ",
+    "key": "ui_aplicaciones_clnicas_usa_el",
+    "start": 24,
+    "lineno": 1532
+  },
+  {
+    "old": "### 💡 RECOMENDACIONES DE USO",
+    "key": "ui_recomendaciones_de_uso",
+    "start": 20,
+    "lineno": 1527
+  },
+  {
+    "old": "### 📋 Fortalezas y Debilidades",
+    "key": "ui_fortalezas_y_debilidades",
+    "start": 20,
+    "lineno": 1473
+  },
+  {
+    "old": "## 🔬 ANÁLISIS DETALLADO",
+    "key": "ui_anlisis_detallado",
+    "start": 20,
+    "lineno": 1443
+  },
+  {
+    "old": "### 🕸️ Comparación Multidimensional",
+    "key": "ui_comparacin_multidimensional",
+    "start": 20,
+    "lineno": 1350
+  },
+  {
+    "old": "## 📊 ANÁLISIS COMPARATIVO DE RENDIMIENTO",
+    "key": "ui_anlisis_comparativo_de_rendimiento",
+    "start": 20,
+    "lineno": 1249
+  },
+  {
+    "old": "✅ Reportes estadísticos generados correctamente!",
+    "key": "ui_reportes_estadsticos_generados_correctamente",
+    "start": 23,
+    "lineno": 1021
+  },
+  {
+    "old": "📊 Generar Reporte Estadístico Completo",
+    "key": "ui_generar_reporte_estadstico_completo",
+    "start": 21,
+    "lineno": 856
+  },
+  {
+    "old": "📤 Exportar Resultados Estadísticos",
+    "key": "ui_exportar_resultados_estadsticos",
+    "start": 21,
+    "lineno": 854
+  },
+  {
+    "old": "\n            ⚠️ **No se encontraron diferencias estadísticamente significativas** entre los modelos.\n            \n            **Implicaciones:**\n            - Los modelos tienen rendimiento similar estadísticamente\n            - Otros criterios (velocidad, tamaño) pueden ser decisivos\n            - Se recomienda aumentar el tamaño del dataset de prueba\n            ",
+    "key": "ui_no_se_encontraron_diferencias",
+    "start": 23,
+    "lineno": 834
+  },
+  {
+    "old": "💡 Recomendaciones Estadísticas",
+    "key": "ui_recomendaciones_estadsticas",
+    "start": 21,
+    "lineno": 831
+  },
+  {
+    "old": "📈 Análisis de Significancia Estadística",
+    "key": "ui_anlisis_de_significancia_estadstica",
+    "start": 21,
+    "lineno": 803
+  },
+  {
+    "old": "🎭 Matrices de Confusión por Arquitectura",
+    "key": "ui_matrices_de_confusin_por",
+    "start": 21,
+    "lineno": 793
+  },
+  {
+    "old": "\n        **Prueba de McNemar** compara estadísticamente el rendimiento entre pares de modelos:\n        - **H₀**: No hay diferencia entre los modelos\n        - **H₁**: Hay diferencia significativa\n        - **α = 0.05**: Nivel de significancia\n        ",
+    "key": "ui_prueba_de_mcnemar_compara",
+    "start": 20,
+    "lineno": 765
+  },
+  {
+    "old": "🔬 Pruebas de McNemar - Comparación entre Modelos",
+    "key": "ui_pruebas_de_mcnemar_comparacin",
+    "start": 21,
+    "lineno": 763
+  },
+  {
+    "old": "\n        **MCC** es una métrica balanceada que funciona bien incluso con clases desbalanceadas.\n        - **Rango**: -1 (completamente incorrecto) a +1 (predicción perfecta)\n        - **0**: Predicción aleatoria\n        - **>0.5**: Excelente rendimiento\n        ",
+    "key": "ui_mcc_es_una_mtrica",
+    "start": 20,
+    "lineno": 700
+  },
+  {
+    "old": "🎯 Coeficiente de Correlación de Matthews (MCC)",
+    "key": "ui_coeficiente_de_correlacin_de",
+    "start": 21,
+    "lineno": 698
+  },
+  {
+    "old": "📊 Mostrando resultados de análisis estadístico previo",
+    "key": "ui_mostrando_resultados_de_anlisis",
+    "start": 20,
+    "lineno": 684
+  },
+  {
+    "old": "• O rutas absolutas como `/ruta/completa/Pruebas`",
+    "key": "ui_o_rutas_absolutas_como",
+    "start": 28,
+    "lineno": 679
+  },
+  {
+    "old": "• Usa rutas relativas como `Pruebas` o `./Pruebas`",
+    "key": "ui_usa_rutas_relativas_como",
+    "start": 28,
+    "lineno": 678
+  },
+  {
+    "old": "• Verifica que la ruta sea correcta",
+    "key": "ui_verifica_que_la_ruta",
+    "start": 28,
+    "lineno": 677
+  },
+  {
+    "old": "**💡 Sugerencias:**",
+    "key": "ui_sugerencias",
+    "start": 28,
+    "lineno": 676
+  },
+  {
+    "old": "✅ Evaluación completada! Realizando análisis estadístico...",
+    "key": "ui_evaluacin_completada_realizando_anlisis",
+    "start": 35,
+    "lineno": 661
+  },
+  {
+    "old": "🔄 Evaluando modelos en dataset completo... Esto puede tomar varios minutos.",
+    "key": "ui_evaluando_modelos_en_dataset",
+    "start": 28,
+    "lineno": 655
+  },
+  {
+    "old": "**📈 Distribución por Clase:**",
+    "key": "ui_distribucin_por_clase",
+    "start": 44,
+    "lineno": 634
+  },
+  {
+    "old": "#### 📊 Resumen del Dataset:",
+    "key": "ui_resumen_del_dataset",
+    "start": 40,
+    "lineno": 625
+  },
+  {
+    "old": "\n        **Evaluación rigurosa con pruebas estadísticas:**\n        - 🎯 **Coeficiente de Matthews (MCC)**: Métrica balanceada que considera todos los casos de la matriz de confusión\n        - 🔬 **Prueba de McNemar**: Comparación estadística entre pares de modelos\n        - 📈 **Intervalos de Confianza**: Bootstrap CI para robustez estadística\n        ",
+    "key": "ui_evaluacin_rigurosa_con_pruebas",
+    "start": 20,
+    "lineno": 572
+  },
+  {
+    "old": "El archivo CSV debe contener columnas 'ruta_imagen' y 'etiqueta_verdadera'",
+    "key": "ui_el_archivo_csv_debe",
+    "start": 29,
+    "lineno": 441
+  },
+  {
+    "old": "No se encontraron carpetas de clases en el dataset",
+    "key": "ui_no_se_encontraron_carpetas",
+    "start": 25,
+    "lineno": 397
+  }
+]

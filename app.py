@@ -8,6 +8,8 @@ from plotly.subplots import make_subplots
 from PIL import Image
 import cv2
 import os
+import sys
+import subprocess
 import time
 from datetime import datetime
 import warnings
@@ -22,12 +24,17 @@ from scipy.stats import chi2
 from scipy import stats
 import itertools
 from pathlib import Path
+from translation import get_text, get_available_languages
 
 warnings.filterwarnings('ignore')
 
+# Inicializar el lenguaje antes de configurar la página
+if 'language' not in st.session_state:
+    st.session_state.language = 'es'
+
 # Configuración de página
 st.set_page_config(
-    page_title="🏥 Comparación de 3 Arquitecturas CNN + Estadísticas",
+    page_title=get_text('page_title', st.session_state.language, "🏥 Comparación de 3 Arquitecturas CNN + Estadísticas"),
     page_icon="👁️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -42,7 +49,7 @@ class AplicacionTresArquitecturas:
             'ageDegeneration': {
                 'nombre': 'Degeneración Macular (AMD)',
                 'descripcion': 'Deterioro de la mácula afectando la visión central',
-                'gravedad': 'Alta',
+                'gravedad': get_text('Diabetic_gravedad', st.session_state.language, get_text('DiscEdema_gravedad', st.session_state.language, get_text('Glaucoma_gravedad', st.session_state.language, get_text('Retinitis_gravedad', st.session_state.language, get_text('high', st.session_state.language, 'Alta'))))),
                 'color': '#DAA520',
                 'tratamiento': 'Inyecciones anti-VEGF, vitaminas, láser',
                 'pronostico': 'Variable, tratamientos pueden retrasar la progresión'
@@ -50,50 +57,50 @@ class AplicacionTresArquitecturas:
             'cataract': {
                 'nombre': 'Catarata',
                 'descripcion': 'Opacidad del cristalino del ojo',
-                'gravedad': 'Moderada',
+                'gravedad': get_text('CentralSerous_gravedad', st.session_state.language, get_text('MacularScar_gravedad', st.session_state.language, get_text('moderate', st.session_state.language, 'Moderada'))),
                 'color': '#A9A9A9',
                 'tratamiento': 'Cirugía de reemplazo de cristalino',
                 'pronostico': 'Excelente tras cirugía'
             },
             'diabetes': {
-                'nombre': 'Retinopatía Diabética',
-                'descripcion': 'Daño vascular por diabetes',
-                'gravedad': 'Alta',
+                'nombre': get_text('Diabetic_nombre', st.session_state.language, 'Retinopatía Diabética'),
+                'descripcion': get_text('Diabetic_descripcion', st.session_state.language, 'Daño vascular por diabetes'),
+                'gravedad': get_text('Diabetic_gravedad', st.session_state.language, get_text('DiscEdema_gravedad', st.session_state.language, get_text('Glaucoma_gravedad', st.session_state.language, get_text('Retinitis_gravedad', st.session_state.language, get_text('high', st.session_state.language, 'Alta'))))),
                 'color': '#FF6B6B',
-                'tratamiento': 'Control glucémico, inyecciones intravítreas, láser',
-                'pronostico': 'Manejo temprano previene ceguera'
+                'tratamiento': get_text('Diabetic_tratamiento', st.session_state.language, 'Control glucémico, inyecciones intravítreas, láser'),
+                'pronostico': get_text('Diabetic_pronostico', st.session_state.language, 'Manejo temprano previene ceguera')
             },
             'glaucoma': {
-                'nombre': 'Glaucoma',
-                'descripcion': 'Daño del nervio óptico',
-                'gravedad': 'Alta',
+                'nombre': get_text('Glaucoma_nombre', st.session_state.language, 'Glaucoma'),
+                'descripcion': get_text('Glaucoma_descripcion', st.session_state.language, 'Daño del nervio óptico'),
+                'gravedad': get_text('Diabetic_gravedad', st.session_state.language, get_text('DiscEdema_gravedad', st.session_state.language, get_text('Glaucoma_gravedad', st.session_state.language, get_text('Retinitis_gravedad', st.session_state.language, get_text('high', st.session_state.language, 'Alta'))))),
                 'color': '#DC143C',
-                'tratamiento': 'Gotas hipotensoras, láser, cirugía',
-                'pronostico': 'Progresión lenta con tratamiento'
+                'tratamiento': get_text('Glaucoma_tratamiento', st.session_state.language, 'Gotas hipotensoras, láser, cirugía'),
+                'pronostico': get_text('Glaucoma_pronostico', st.session_state.language, 'Progresión lenta con tratamiento')
             },
             'hypertension': {
                 'nombre': 'Retinopatía Hipertensiva',
                 'descripcion': 'Daño vascular retiniano por hipertensión',
-                'gravedad': 'Moderada',
+                'gravedad': get_text('CentralSerous_gravedad', st.session_state.language, get_text('MacularScar_gravedad', st.session_state.language, get_text('moderate', st.session_state.language, 'Moderada'))),
                 'color': '#FFA500',
                 'tratamiento': 'Control estricto de la presión arterial',
                 'pronostico': 'Favorable con control sistémico'
             },
             'myopia': {
-                'nombre': 'Miopía',
-                'descripcion': 'Error refractivo',
-                'gravedad': 'Leve',
+                'nombre': get_text('Myopia_nombre', st.session_state.language, 'Miopía'),
+                'descripcion': get_text('Myopia_descripcion', st.session_state.language, 'Error refractivo'),
+                'gravedad': get_text('Myopia_gravedad', st.session_state.language, get_text('Pterygium_gravedad', st.session_state.language, get_text('mild', st.session_state.language, 'Leve'))),
                 'color': '#87CEEB',
-                'tratamiento': 'Lentes correctivos, cirugía refractiva',
-                'pronostico': 'Excelente con corrección'
+                'tratamiento': get_text('Myopia_tratamiento', st.session_state.language, 'Lentes correctivos, cirugía refractiva'),
+                'pronostico': get_text('Myopia_pronostico', st.session_state.language, 'Excelente con corrección')
             },
             'normal': {
-                'nombre': 'Ojo Sano',
-                'descripcion': 'Sin patologías detectadas',
-                'gravedad': 'Normal',
+                'nombre': get_text('Healthy_nombre', st.session_state.language, 'Ojo Sano'),
+                'descripcion': get_text('Healthy_descripcion', st.session_state.language, 'Sin patologías detectadas'),
+                'gravedad': get_text('Healthy_gravedad', st.session_state.language, get_text('normal', st.session_state.language, 'Normal')),
                 'color': '#32CD32',
-                'tratamiento': 'Exámenes preventivos anuales',
-                'pronostico': 'Excelente'
+                'tratamiento': get_text('Healthy_tratamiento', st.session_state.language, 'Exámenes preventivos anuales'),
+                'pronostico': get_text('Healthy_pronostico', st.session_state.language, 'Excelente')
             },
             'others': {
                 'nombre': 'Otras Patologías',
@@ -108,42 +115,42 @@ class AplicacionTresArquitecturas:
         # Tu código existente de architecture_info...
         self.informacion_arquitecturas = {
             'CNN_Original': {
-                'nombre_completo': 'CNN MobileNetV2 Original',
-                'descripcion': 'Tu modelo inicial entrenado (70.44% accuracy)',
+                'nombre_completo': get_text('CNN_original_nombre', st.session_state.language, 'CNN MobileNetV2 Original'),
+                'descripcion': get_text('CNN_original_descripcion', st.session_state.language, 'Tu modelo inicial entrenado (70.44% accuracy)'),
                 'color': '#E91E63',
                 'icon': '🧠',
-                'ventajas': ['Tu modelo base', 'Conocido', 'Optimizado móvil'],
+                'ventajas': [get_text('CNN_original_ventaja1', st.session_state.language, 'Tu modelo base'), get_text('CNN_original_ventaja2', st.session_state.language, 'Conocido'), get_text('CNN_original_ventaja3', st.session_state.language, 'Optimizado móvil')],
                 'caracteristicas': {
-                    'Tipo': 'Depthwise Separable Convolutions',
-                    'Parámetros': '~3.5M',
-                    'Ventaja principal': 'Eficiencia computacional',
-                    'Año': '2018'
+                    get_text('type', st.session_state.language, 'Tipo'): get_text('CNN_original_tipo', st.session_state.language, 'Depthwise Separable Convolutions'),
+                    get_text('parameters_table', st.session_state.language, get_text('parameters_count', st.session_state.language, 'Parámetros')): '~3.5M',
+                    get_text('main_advantage', st.session_state.language, 'Ventaja principal'): get_text('CNN_original_ventaja_principal', st.session_state.language, 'Eficiencia computacional'),
+                    get_text('year', st.session_state.language, 'Año'): '2018'
                 }
             },
             'EfficientNetB0': {
-                'nombre_completo': 'EfficientNet-B0',
-                'descripcion': 'Arquitectura con compound scaling balanceado',
+                'nombre_completo': get_text('EfficientNet_nombre', st.session_state.language, 'EfficientNet-B0'),
+                'descripcion': get_text('EfficientNet_descripcion', st.session_state.language, 'Arquitectura con compound scaling balanceado'),
                 'color': '#2196F3',
                 'icon': '⚡',
-                'ventajas': ['Compound scaling', 'Balance accuracy/params', 'Estado del arte'],
+                'ventajas': [get_text('EfficientNet_ventaja1', st.session_state.language, 'Compound scaling'), get_text('EfficientNet_ventaja2', st.session_state.language, 'Balance accuracy/params'), get_text('EfficientNet_ventaja3', st.session_state.language, 'Estado del arte')],
                 'caracteristicas': {
-                    'Tipo': 'Compound Scaling CNN',
-                    'Parámetros': '~5.3M',
-                    'Ventaja principal': 'Balance óptimo accuracy/eficiencia',
-                    'Año': '2019'
+                    get_text('type', st.session_state.language, 'Tipo'): get_text('EfficientNet_tipo', st.session_state.language, 'Compound Scaling CNN'),
+                    get_text('parameters_table', st.session_state.language, get_text('parameters_count', st.session_state.language, 'Parámetros')): '~5.3M',
+                    get_text('main_advantage', st.session_state.language, 'Ventaja principal'): get_text('EfficientNet_ventaja_principal', st.session_state.language, 'Balance óptimo accuracy/eficiencia'),
+                    get_text('year', st.session_state.language, 'Año'): '2019'
                 }
             },
             'ResNet50V2': {
-                'nombre_completo': 'ResNet-50 V2',
-                'descripcion': 'Red residual profunda con conexiones skip',
+                'nombre_completo': get_text('ResNet_nombre', st.session_state.language, 'ResNet-50 V2'),
+                'descripcion': get_text('ResNet_descripcion', st.session_state.language, 'Red residual profunda con conexiones skip'),
                 'color': '#FF9800',
                 'icon': '🔗',
-                'ventajas': ['Conexiones residuales', 'Red profunda', 'Estable'],
+                'ventajas': [get_text('ResNet_ventaja1', st.session_state.language, 'Conexiones residuales'), get_text('ResNet_ventaja2', st.session_state.language, 'Red profunda'), get_text('ResNet_ventaja3', st.session_state.language, 'Estable')],
                 'caracteristicas': {
-                    'Tipo': 'Residual Network',
-                    'Parámetros': '~25.6M',
-                    'Ventaja principal': 'Capacidad de representación profunda',
-                    'Año': '2016'
+                    get_text('type', st.session_state.language, 'Tipo'): get_text('ResNet_tipo', st.session_state.language, 'Residual Network'),
+                    get_text('parameters_table', st.session_state.language, get_text('parameters_count', st.session_state.language, 'Parámetros')): '~25.6M',
+                    get_text('main_advantage', st.session_state.language, 'Ventaja principal'): get_text('ResNet_ventaja_principal', st.session_state.language, 'Capacidad de representación profunda'),
+                    get_text('year', st.session_state.language, 'Año'): '2016'
                 }
             }
         }
@@ -174,14 +181,14 @@ class AplicacionTresArquitecturas:
                 if os.path.exists(ruta_absoluta):
                     try:
                         modelos[nombre_arq] = tf.keras.models.load_model(ruta_absoluta)
-                        st.success(f"✅ {nombre_arq} cargado correctamente")
+                        st.success(get_text('model_loaded', st.session_state.language).format(name=nombre_arq))
                     except Exception as e:
                         if 'Unrecognized keyword arguments' in str(e):
                             st.warning(f"⚠️ {nombre_arq} fue creado con Keras 3. Por favor, re-entrénalo.")
                         else:
-                            st.error(f"❌ Error al cargar {nombre_arq}: {e}")
+                            st.error(get_text('loading_error', st.session_state.language).format(error=f"{nombre_arq}: {e}"))
                 else:
-                    st.warning(f"⚠️ No se encontró {nombre_archivo}")
+                    st.warning(get_text('model_not_found', st.session_state.language).format(filename=nombre_archivo))
             
             # Cargar nombres de clases
             nombres_clases_conjunto = {}
@@ -387,7 +394,7 @@ class AplicacionTresArquitecturas:
             carpetas_clases = [d for d in ruta_dataset.iterdir() if d.is_dir()]
             
             if not carpetas_clases:
-                st.error("No se encontraron carpetas de clases en el dataset")
+                st.error(get_text('ui_no_se_encontraron_carpetas', st.session_state.language, "No se encontraron carpetas de clases en el dataset"))
                 return None
             
             # Mapear nombres de carpetas a índices
@@ -431,7 +438,7 @@ class AplicacionTresArquitecturas:
                 df_prueba = pd.read_csv(entrada_dataset)
                 
                 if 'ruta_imagen' not in df_prueba.columns or 'etiqueta_verdadera' not in df_prueba.columns:
-                    st.error("El archivo CSV debe contener columnas 'ruta_imagen' y 'etiqueta_verdadera'")
+                    st.error(get_text('ui_el_archivo_csv_debe', st.session_state.language, "El archivo CSV debe contener columnas 'ruta_imagen' y 'etiqueta_verdadera'"))
                     return None
                 
                 datos_imagenes = df_prueba.to_dict('records')
@@ -561,26 +568,26 @@ class AplicacionTresArquitecturas:
     def mostrar_seccion_analisis_estadistico(self):
         """Sección completa de análisis estadístico"""
         st.markdown("---")
-        st.header("📊 ANÁLISIS ESTADÍSTICO INFERENCIAL")
-        st.markdown("""
+        st.header(get_text('statistical_analysis_title', st.session_state.language, "📊 ANÁLISIS ESTADÍSTICO INFERENCIAL"))
+        st.markdown(get_text('ui_evaluacin_rigurosa_con_pruebas', st.session_state.language, """
         **Evaluación rigurosa con pruebas estadísticas:**
         - 🎯 **Coeficiente de Matthews (MCC)**: Métrica balanceada que considera todos los casos de la matriz de confusión
         - 🔬 **Prueba de McNemar**: Comparación estadística entre pares de modelos
         - 📈 **Intervalos de Confianza**: Bootstrap CI para robustez estadística
-        """)
+        """))
         
         # Dataset de evaluación
-        st.subheader("📂 Dataset de Evaluación")
+        st.subheader(get_text('dataset_evaluation', st.session_state.language, "📂 Dataset de Evaluación"))
         
         # Input de ruta de carpeta
         carpeta_dataset = st.text_input(
-            "🗂️ Ruta de la carpeta de pruebas:",
+            get_text('dataset_path', st.session_state.language, "🗂️ Ruta de la carpeta de pruebas:"),
             value="Pruebas",  # Valor por defecto
-            help="Ejemplo: Pruebas, ./Pruebas, /path/to/Pruebas"
+            help=get_text('dataset_path_help', st.session_state.language, "Ejemplo: Pruebas, ./Pruebas, /path/to/Pruebas")
         )
         
         # Mostrar estructura esperada
-        with st.expander("📋 Estructura de carpetas esperada"):
+        with st.expander(get_text('expected_structure', st.session_state.language, "📋 Estructura de carpetas esperada")):
             st.code("""
     📂 Pruebas/
     ├── 📁 Central_Serous_Chorioretinopathy/
@@ -610,12 +617,12 @@ class AplicacionTresArquitecturas:
                 st.success(f"✅ Carpeta encontrada: {ruta_dataset.absolute()}")
                 
                 # Vista previa del dataset
-                if st.button("👀 Vista Previa del Dataset", key="vista_previa_dataset"):
+                if st.button(get_text('dataset_preview', st.session_state.language, "👀 Vista Previa del Dataset"), key="vista_previa_dataset"):
                     with st.spinner("🔍 Escaneando dataset..."):
                         datos_vista_previa, mapeo_clases = self.escanear_carpeta_dataset(ruta_dataset)
                         
                         if datos_vista_previa:
-                            st.markdown("#### 📊 Resumen del Dataset:")
+                            st.markdown(get_text('ui_resumen_del_dataset', st.session_state.language, "#### 📊 Resumen del Dataset:"))
                             
                             # Crear DataFrame para mostrar distribución
                             df_vista_previa = pd.DataFrame(datos_vista_previa)
@@ -624,7 +631,7 @@ class AplicacionTresArquitecturas:
                             col1, col2 = st.columns(2)
                             
                             with col1:
-                                st.markdown("**📈 Distribución por Clase:**")
+                                st.markdown(get_text('ui_distribucin_por_clase', st.session_state.language, "**📈 Distribución por Clase:**"))
                                 for nombre_clase, conteo in conteos_clases.items():
                                     st.markdown(f"• **{nombre_clase}**: {conteo} imágenes")
                             
@@ -644,14 +651,14 @@ class AplicacionTresArquitecturas:
                             st.dataframe(df_vista_previa.head(10), use_container_width=True)
                 
                 # Botón de evaluación
-                if st.button("🚀 INICIAR EVALUACIÓN ESTADÍSTICA", type="primary", use_container_width=True, key="eval_carpeta"):
-                    st.info("🔄 Evaluando modelos en dataset completo... Esto puede tomar varios minutos.")
+                if st.button(get_text('start_evaluation', st.session_state.language, "🚀 INICIAR EVALUACIÓN ESTADÍSTICA"), type="primary", use_container_width=True, key="eval_carpeta"):
+                    st.info(get_text('ui_evaluando_modelos_en_dataset', st.session_state.language, "🔄 Evaluando modelos en dataset completo... Esto puede tomar varios minutos."))
                     
                     # Evaluar modelos
                     resultados_evaluacion = self.evaluar_modelos_en_dataset(str(ruta_dataset))
                     
                     if resultados_evaluacion is not None:
-                        st.success("✅ Evaluación completada! Realizando análisis estadístico...")
+                        st.success(get_text('ui_evaluacin_completada_realizando_anlisis', st.session_state.language, "✅ Evaluación completada! Realizando análisis estadístico..."))
                         
                         # Análisis estadístico
                         resultados_estadisticos = self.realizar_analisis_estadistico(resultados_evaluacion)
@@ -666,15 +673,15 @@ class AplicacionTresArquitecturas:
             
             else:
                 st.error(f"❌ No se encontró la carpeta: {carpeta_dataset}")
-                st.markdown("**💡 Sugerencias:**")
-                st.markdown("• Verifica que la ruta sea correcta")
-                st.markdown("• Usa rutas relativas como `Pruebas` o `./Pruebas`")
-                st.markdown("• O rutas absolutas como `/ruta/completa/Pruebas`")
+                st.markdown(get_text('ui_sugerencias', st.session_state.language, "**💡 Sugerencias:**"))
+                st.markdown(get_text('ui_verifica_que_la_ruta', st.session_state.language, "• Verifica que la ruta sea correcta"))
+                st.markdown(get_text('ui_usa_rutas_relativas_como', st.session_state.language, "• Usa rutas relativas como `Pruebas` o `./Pruebas`"))
+                st.markdown(get_text('ui_o_rutas_absolutas_como', st.session_state.language, "• O rutas absolutas como `/ruta/completa/Pruebas`"))
         
         # Mostrar resultados si ya están calculados
         if hasattr(st.session_state, 'resultados_estadisticos') and st.session_state.resultados_estadisticos:
             st.markdown("---")
-            st.info("📊 Mostrando resultados de análisis estadístico previo")
+            st.info(get_text('ui_mostrando_resultados_de_anlisis', st.session_state.language, "📊 Mostrando resultados de análisis estadístico previo"))
             self.mostrar_resultados_estadisticos(
                 st.session_state.resultados_estadisticos, 
                 st.session_state.resultados_evaluacion
@@ -688,14 +695,14 @@ class AplicacionTresArquitecturas:
         timestamp = str(int(time.time() * 1000))  # timestamp en milisegundos
         
         # === SECCIÓN 1: COEFICIENTE DE MATTHEWS ===
-        st.subheader("🎯 Coeficiente de Correlación de Matthews (MCC)")
+        st.subheader(get_text('ui_coeficiente_de_correlacin_de', st.session_state.language, "🎯 Coeficiente de Correlación de Matthews (MCC)"))
         
-        st.markdown("""
+        st.markdown(get_text('ui_mcc_es_una_mtrica', st.session_state.language, """
         **MCC** es una métrica balanceada que funciona bien incluso con clases desbalanceadas.
         - **Rango**: -1 (completamente incorrecto) a +1 (predicción perfecta)
         - **0**: Predicción aleatoria
         - **>0.5**: Excelente rendimiento
-        """)
+        """))
         
         # Tabla de MCC con intervalos de confianza
         datos_mcc = []
@@ -705,7 +712,7 @@ class AplicacionTresArquitecturas:
             accuracy = resultados_estadisticos['puntuaciones_accuracy'][arq]
             
             datos_mcc.append({
-                'Arquitectura': arq.replace('_', ' '),
+                get_text('architecture', st.session_state.language, 'Arquitectura'): arq.replace('_', ' '),
                 'MCC': f"{puntuacion_mcc:.4f}",
                 'IC 95% Inferior': f"{ci_inferior:.4f}" if ci_inferior else "N/A",
                 'IC 95% Superior': f"{ci_superior:.4f}" if ci_superior else "N/A",
@@ -753,14 +760,14 @@ class AplicacionTresArquitecturas:
         st.plotly_chart(fig_mcc, use_container_width=True, key=f"grafico_mcc_principal_{timestamp}")
         
         # === SECCIÓN 2: PRUEBAS DE MCNEMAR ===
-        st.subheader("🔬 Pruebas de McNemar - Comparación entre Modelos")
+        st.subheader(get_text('ui_pruebas_de_mcnemar_comparacin', st.session_state.language, "🔬 Pruebas de McNemar - Comparación entre Modelos"))
         
-        st.markdown("""
+        st.markdown(get_text('ui_prueba_de_mcnemar_compara', st.session_state.language, """
         **Prueba de McNemar** compara estadísticamente el rendimiento entre pares de modelos:
         - **H₀**: No hay diferencia entre los modelos
         - **H₁**: Hay diferencia significativa
         - **α = 0.05**: Nivel de significancia
-        """)
+        """))
         
         datos_mcnemar = []
         for comparacion, resultado in resultados_estadisticos['resultados_mcnemar'].items():
@@ -783,7 +790,7 @@ class AplicacionTresArquitecturas:
         self.graficar_mapa_calor_mcnemar(resultados_estadisticos['resultados_mcnemar'], timestamp)
         
         # === SECCIÓN 3: MATRICES DE CONFUSIÓN ===
-        st.subheader("🎭 Matrices de Confusión por Arquitectura")
+        st.subheader(get_text('ui_matrices_de_confusin_por', st.session_state.language, "🎭 Matrices de Confusión por Arquitectura"))
         
         cols = st.columns(len(self.modelos))
         
@@ -793,7 +800,7 @@ class AplicacionTresArquitecturas:
                 st.plotly_chart(fig_cm, use_container_width=True, key=f"matriz_confusion_{arq}_{timestamp}")
         
         # === SECCIÓN 4: ANÁLISIS DE SIGNIFICANCIA ===
-        st.subheader("📈 Análisis de Significancia Estadística")
+        st.subheader(get_text('ui_anlisis_de_significancia_estadstica', st.session_state.language, "📈 Análisis de Significancia Estadística"))
         
         # Resumen de significancia
         comparaciones_significativas = [
@@ -821,17 +828,17 @@ class AplicacionTresArquitecturas:
             )
         
         # Recomendaciones estadísticas
-        st.subheader("💡 Recomendaciones Estadísticas")
+        st.subheader(get_text('ui_recomendaciones_estadsticas', st.session_state.language, "💡 Recomendaciones Estadísticas"))
         
         if len(comparaciones_significativas) == 0:
-            st.warning("""
+            st.warning(get_text('ui_no_se_encontraron_diferencias', st.session_state.language, """
             ⚠️ **No se encontraron diferencias estadísticamente significativas** entre los modelos.
             
             **Implicaciones:**
             - Los modelos tienen rendimiento similar estadísticamente
             - Otros criterios (velocidad, tamaño) pueden ser decisivos
             - Se recomienda aumentar el tamaño del dataset de prueba
-            """)
+            """))
         else:
             st.success(f"""
             ✅ **Se encontraron {len(comparaciones_significativas)} diferencias significativas**
@@ -844,9 +851,9 @@ class AplicacionTresArquitecturas:
                 st.markdown(f"• **{comp.replace('_', ' ')}**: {resultado['interpretacion']}")
         
         # === SECCIÓN 5: EXPORTAR RESULTADOS ESTADÍSTICOS ===
-        st.subheader("📤 Exportar Resultados Estadísticos")
+        st.subheader(get_text('ui_exportar_resultados_estadsticos', st.session_state.language, "📤 Exportar Resultados Estadísticos"))
         
-        if st.button("📊 Generar Reporte Estadístico Completo", use_container_width=True, key=f"btn_generar_reporte_estadistico_{timestamp}"):
+        if st.button(get_text('ui_generar_reporte_estadstico_completo', st.session_state.language, "📊 Generar Reporte Estadístico Completo"), use_container_width=True, key=f"btn_generar_reporte_estadistico_{timestamp}"):
             self.generar_reporte_estadistico(resultados_estadisticos, resultados_evaluacion)
     
     def interpretar_mcc(self, puntuacion_mcc):
@@ -1011,7 +1018,7 @@ class AplicacionTresArquitecturas:
                     use_container_width=True
                 )
             
-            st.success("✅ Reportes estadísticos generados correctamente!")
+            st.success(get_text('ui_reportes_estadsticos_generados_correctamente', st.session_state.language, "✅ Reportes estadísticos generados correctamente!"))
             
             # Limpiar archivos temporales
             try:
@@ -1167,41 +1174,43 @@ Arquitecturas evaluadas:
     
     def mostrar_encabezado(self):
         """Header de la aplicación"""
-        st.title("🏆 DETECCION DE ENFERMEDADES OCULARES 👁️")
-        st.subheader("MobileNetV2 vs EfficientNet-B0 vs ResNet-50 V2 + Análisis Estadístico")
+        st.title(get_text('main_title', st.session_state.language))
+        st.subheader(get_text('page_subtitle', st.session_state.language))
         st.markdown("---")
     
     def mostrar_vitrina_arquitecturas(self):
         """Muestra las características de cada arquitectura"""
-        st.header("🏗️ LAS 3 ARQUITECTURAS EN COMPETENCIA")
+        st.header(get_text('architectures_title', st.session_state.language))
         
         cols = st.columns(3)
         
         for i, (nombre_arq, info) in enumerate(self.informacion_arquitecturas.items()):
             with cols[i]:
                 # Header de la arquitectura
-                st.subheader(f"{info['icon']} {info['nombre_completo']}")
+                key_prefix = 'CNN_original' if nombre_arq == 'CNN_Original' else 'EfficientNet' if nombre_arq == 'EfficientNetB0' else 'ResNet'
+                st.subheader(f"{info['icon']} {get_text(f'{key_prefix}_nombre', st.session_state.language, info['nombre_completo'])}")
                 
                 # Descripción
-                st.info(f"**{info['descripcion']}**")
+                st.info(f"**{get_text(f'{key_prefix}_descripcion', st.session_state.language, info['descripcion'])}**")
                 
                 # Características técnicas
-                st.markdown("**📊 Características:**")
-                st.markdown(f"• **Tipo:** {info['caracteristicas']['Tipo']}")
-                st.markdown(f"• **Parámetros:** {info['caracteristicas']['Parámetros']}")
-                st.markdown(f"• **Ventaja:** {info['caracteristicas']['Ventaja principal']}")
-                st.markdown(f"• **Año:** {info['caracteristicas']['Año']}")
+                st.markdown(f"**📊 {get_text('technical_metrics', st.session_state.language).replace('**', '')}**")
+                st.markdown(f"• **{get_text('type', st.session_state.language, 'Tipo')}:** {get_text(f'{key_prefix}_tipo', st.session_state.language, info['caracteristicas'][get_text('type', st.session_state.language, 'Tipo')])}")
+                st.markdown(f"• **{get_text('parameters_count', st.session_state.language, 'Parámetros')}:** {info['caracteristicas'][get_text('parameters_table', st.session_state.language, get_text('parameters_count', st.session_state.language, 'Parámetros'))]}")
+                st.markdown(f"• **{get_text('main_advantage', st.session_state.language, 'Ventaja principal')}:** {get_text(f'{key_prefix}_ventaja_principal', st.session_state.language, info['caracteristicas'][get_text('main_advantage', st.session_state.language, 'Ventaja principal')])}")
+                st.markdown(f"• **{get_text('year', st.session_state.language, 'Año')}:** {info['caracteristicas'][get_text('year', st.session_state.language, 'Año')]}")
                 
                 # Ventajas
-                st.markdown("**✅ Ventajas:**")
-                for ventaja in info['ventajas']:
-                    st.markdown(f"• {ventaja}")
+                st.markdown(f"**✅ {get_text('strengths', st.session_state.language).replace('**', '').replace('🟢 ', '')}**")
+                for j in range(len(info['ventajas'])):
+                    ventaja_traducida = get_text(f"{key_prefix}_ventaja{j+1}", st.session_state.language, info['ventajas'][j])
+                    st.markdown(f"• {ventaja_traducida}")
                 
                 st.markdown("---")
     
     def mostrar_resultados_prediccion(self, predicciones):
         """Muestra resultados de las 3 arquitecturas lado a lado"""
-        st.header("🎯 RESULTADOS DE PREDICCIÓN")
+        st.header(get_text('results_title', st.session_state.language, "🎯 RESULTADOS DE PREDICCIÓN"))
         
         cols = st.columns(3)
         
@@ -1218,26 +1227,26 @@ Arquitecturas evaluadas:
                 info_clase = self.informacion_clases.get(clase_predicha, {})
                 nombre_es = info_clase.get('nombre', clase_predicha)
                 
-                st.success(f"**Diagnóstico:** {nombre_es}")
+                st.success(f"**{get_text('ui_diagnostico', st.session_state.language, 'Diagnóstico')}:** {nombre_es}")
                 
                 # Confianza (métrica principal)
                 st.metric(
-                    label="🎯 Confianza",
+                    label=get_text('confidence', st.session_state.language, "🎯 Confianza"),
                     value=f"{pred['confianza']:.1%}",
                     delta=None
                 )
                 
                 # Métricas técnicas
-                st.markdown("**📊 Métricas Técnicas:**")
-                st.markdown(f"⏱️ **Tiempo:** {pred['tiempo_prediccion']:.3f}s")
-                st.markdown(f"💾 **Tamaño:** {pred['tamaño_modelo']:.1f}MB")
-                st.markdown(f"🔢 **Parámetros:** {pred['conteo_parametros']:,}")
+                st.markdown(get_text('technical_metrics', st.session_state.language, get_text('technical_details', st.session_state.language, "**📊 Métricas Técnicas:**")))
+                st.markdown(f"⏱️ **{get_text('ui_tiempo', st.session_state.language, 'Tiempo')}:** {pred['tiempo_prediccion']:.3f}s")
+                st.markdown(f"💾 **{get_text('ui_tamano', st.session_state.language, 'Tamaño')}:** {pred['tamaño_modelo']:.1f}MB")
+                st.markdown(f"🔢 **{get_text('ui_parametros', st.session_state.language, 'Parámetros')}:** {pred['conteo_parametros']:,}")
                 
                 st.markdown("---")
     
     def mostrar_comparacion_rendimiento(self, predicciones):
         """Gráficos comparativos de rendimiento"""
-        st.markdown("## 📊 ANÁLISIS COMPARATIVO DE RENDIMIENTO")
+        st.markdown(get_text('ui_anlisis_comparativo_de_rendimiento', st.session_state.language, "## 📊 ANÁLISIS COMPARATIVO DE RENDIMIENTO"))
         
         # Crear timestamp único
         import time
@@ -1246,8 +1255,8 @@ Arquitecturas evaluadas:
         # Crear DataFrame para gráficos
         df = pd.DataFrame([
             {
-                'Arquitectura': pred['arquitectura'].replace('_', ' '),
-                'Confianza': pred['confianza'],
+                get_text('architecture', st.session_state.language, 'Arquitectura'): pred['arquitectura'].replace('_', ' '),
+                get_text('confidence_table', st.session_state.language, 'Confianza'): pred['confianza'],
                 'Tiempo (s)': pred['tiempo_prediccion'],
                 'Tamaño (MB)': pred['tamaño_modelo'],
                 'Parámetros (M)': pred['conteo_parametros'] / 1_000_000,
@@ -1266,16 +1275,16 @@ Arquitecturas evaluadas:
             # Gráfico de confianza
             fig_conf = go.Figure(data=[
                 go.Bar(
-                    x=df['Arquitectura'],
-                    y=df['Confianza'],
-                    text=[f"{conf:.1%}" for conf in df['Confianza']],
+                    x=df[get_text('architecture', st.session_state.language, 'Arquitectura')],
+                    y=df[get_text('confidence_table', st.session_state.language, 'Confianza')],
+                    text=[f"{conf:.1%}" for conf in df[get_text('confidence_table', st.session_state.language, 'Confianza')]],
                     textposition='auto',
                     marker_color=colores,
-                    name='Confianza'
+                    name=get_text('confidence_table', st.session_state.language, 'Confianza')
                 )
             ])
             fig_conf.update_layout(
-                title='🎯 Confianza de Predicción',
+                title=get_text('confidence_chart', st.session_state.language, '🎯 Confianza de Predicción'),
                 yaxis=dict(tickformat='.0%'),
                 height=400
             )
@@ -1284,16 +1293,16 @@ Arquitecturas evaluadas:
             # Gráfico de tamaño
             fig_tamaño = go.Figure(data=[
                 go.Bar(
-                    x=df['Arquitectura'],
+                    x=df[get_text('architecture', st.session_state.language, 'Arquitectura')],
                     y=df['Tamaño (MB)'],
                     text=[f"{tamaño:.1f}MB" for tamaño in df['Tamaño (MB)']],
                     textposition='auto',
                     marker_color=colores,
-                    name='Tamaño'
+                    name=get_text('size_table', st.session_state.language, 'Tamaño')
                 )
             ])
             fig_tamaño.update_layout(
-                title='💾 Tamaño del Modelo',
+                title=get_text('size_chart', st.session_state.language, '💾 Tamaño del Modelo'),
                 yaxis_title='Tamaño (MB)',
                 height=400
             )
@@ -1303,16 +1312,16 @@ Arquitecturas evaluadas:
             # Gráfico de tiempo
             fig_tiempo = go.Figure(data=[
                 go.Bar(
-                    x=df['Arquitectura'],
+                    x=df[get_text('architecture', st.session_state.language, 'Arquitectura')],
                     y=df['Tiempo (s)'],
                     text=[f"{tiempo:.3f}s" for tiempo in df['Tiempo (s)']],
                     textposition='auto',
                     marker_color=colores,
-                    name='Tiempo'
+                    name=get_text('time_table', st.session_state.language, 'Tiempo')
                 )
             ])
             fig_tiempo.update_layout(
-                title='⏱️ Tiempo de Predicción',
+                title=get_text('time_chart', st.session_state.language, '⏱️ Tiempo de Predicción'),
                 yaxis_title='Tiempo (segundos)',
                 height=400
             )
@@ -1321,16 +1330,16 @@ Arquitecturas evaluadas:
             # Gráfico de eficiencia
             fig_eff = go.Figure(data=[
                 go.Bar(
-                    x=df['Arquitectura'],
+                    x=df[get_text('architecture', st.session_state.language, 'Arquitectura')],
                     y=df['Eficiencia (Conf/Tiempo)'],
                     text=[f"{eff:.1f}" for eff in df['Eficiencia (Conf/Tiempo)']],
                     textposition='auto',
                     marker_color=colores,
-                    name='Eficiencia'
+                    name=get_text('efficiency_table', st.session_state.language, 'Eficiencia')
                 )
             ])
             fig_eff.update_layout(
-                title='⚡ Eficiencia (Confianza/Tiempo)',
+                title=get_text('efficiency_chart', st.session_state.language, '⚡ Eficiencia (Confianza/Tiempo)'),
                 yaxis_title='Eficiencia Score',
                 height=400
             )
@@ -1338,7 +1347,7 @@ Arquitecturas evaluadas:
     
     def mostrar_comparacion_radar(self, predicciones):
         """Gráfico radar comparando todas las métricas"""
-        st.markdown("### 🕸️ Comparación Multidimensional")
+        st.markdown(get_text('ui_comparacin_multidimensional', st.session_state.language, "### 🕸️ Comparación Multidimensional"))
         
         # Crear timestamp único
         import time
@@ -1353,7 +1362,7 @@ Arquitecturas evaluadas:
         
         fig = go.Figure()
         
-        categorias = ['Confianza', 'Velocidad', 'Eficiencia Memoria', 'Score General']
+        categorias = [get_text('confidence_table', st.session_state.language, 'Confianza'), 'Velocidad', 'Eficiencia Memoria', get_text('general_score_table', st.session_state.language, 'Score General')]
         
         for pred in predicciones:
             nombre_arq = pred['arquitectura']
@@ -1382,7 +1391,7 @@ Arquitecturas evaluadas:
                     range=[0, 1],
                     tickformat='.0%'
                 )),
-            title="🕸️ Perfil Multidimensional de Arquitecturas",
+            title=get_text('radar_chart', st.session_state.language, "🕸️ Perfil Multidimensional de Arquitecturas"),
             height=500
         )
         
@@ -1390,13 +1399,13 @@ Arquitecturas evaluadas:
     
     def mostrar_podio_ganadores(self, mejores_modelos):
         """Muestra el podio de ganadores por categoría"""
-        st.header("🏆 PODIO DE GANADORES")
+        st.header(get_text('winners_title', st.session_state.language, "🏆 PODIO DE GANADORES"))
         
         categorias = [
-            ('mayor_confianza', '🎯 Mayor Confianza', 'El más preciso'),
-            ('mas_rapido', '⚡ Más Rápido', 'El velocista'),
-            ('mas_ligero', '🪶 Más Ligero', 'El eficiente'),
-            ('mas_eficiente', '⚖️ Más Eficiente', 'El balanceado')
+            ('mayor_confianza', get_text('highest_confidence', st.session_state.language, '🎯 Mayor Confianza'), get_text('most_accurate', st.session_state.language, 'El más preciso')),
+            ('mas_rapido', get_text('fastest', st.session_state.language, '⚡ Más Rápido'), get_text('speedster', st.session_state.language, 'El velocista')),
+            ('mas_ligero', get_text('lightest', st.session_state.language, '🪶 Más Ligero'), get_text('efficient', st.session_state.language, 'El eficiente')),
+            ('mas_eficiente', get_text('most_efficient', st.session_state.language, '⚖️ Más Eficiente'), get_text('balanced', st.session_state.language, 'El balanceado'))
         ]
         
         cols = st.columns(2)
@@ -1431,7 +1440,7 @@ Arquitecturas evaluadas:
     
     def mostrar_analisis_detallado(self, predicciones, mejores_modelos):
         """Análisis detallado y recomendaciones"""
-        st.markdown("## 🔬 ANÁLISIS DETALLADO")
+        st.markdown(get_text('ui_anlisis_detallado', st.session_state.language, "## 🔬 ANÁLISIS DETALLADO"))
         
         # Encontrar el mejor general (combinación de métricas)
         for pred in predicciones:
@@ -1453,35 +1462,35 @@ Arquitecturas evaluadas:
         info = self.informacion_arquitecturas[nombre_arq]
         
         st.balloons()  # Celebración!
-        st.success(f"## 👑 GANADOR GENERAL: {info['icon']} {nombre_arq.replace('_', ' ')}")
+        st.success(f"{get_text('ui_ganador_general', st.session_state.language, '## 👑 GANADOR GENERAL: ')}{info['icon']} {nombre_arq.replace('_', ' ')}")
         st.metric(
-            label="🏆 Score General",
+            label=get_text('general_score', st.session_state.language, "🏆 Score General"),
             value=f"{mejor_general['score_general']:.3f}",
-            delta="¡El mejor balance de todas las métricas!"
+            delta=get_text('best_balance', st.session_state.language, "¡El mejor balance de todas las métricas!")
         )
         
         # Análisis por arquitectura
-        st.markdown("### 📋 Fortalezas y Debilidades")
+        st.markdown(get_text('ui_fortalezas_y_debilidades', st.session_state.language, "### 📋 Fortalezas y Debilidades"))
         
         for pred in predicciones:
             nombre_arq = pred['arquitectura']
             info = self.informacion_arquitecturas[nombre_arq]
             
-            with st.expander(f"{info['icon']} {nombre_arq.replace('_', ' ')} - Análisis Detallado"):
+            with st.expander(f"{info['icon']} {nombre_arq.replace('_', ' ')} {get_text('ui_analisis_detallado_suffix', st.session_state.language, '- Análisis Detallado')}"):
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    st.markdown("**🟢 Fortalezas:**")
+                    st.markdown(get_text('strengths', st.session_state.language, "**🟢 Fortalezas:**"))
                     fortalezas = []
                     
                     if pred == mejores_modelos.get('mayor_confianza'):
-                        fortalezas.append("✅ Mayor confianza de predicción")
+                        fortalezas.append(get_text('ui_mayor_confianza', st.session_state.language, '✅ Mayor confianza de predicción'))
                     if pred == mejores_modelos.get('mas_rapido'):
-                        fortalezas.append("✅ Tiempo de respuesta más rápido")
+                        fortalezas.append(get_text('ui_tiempo_mas_rapido', st.session_state.language, '✅ Tiempo de respuesta más rápido'))
                     if pred == mejores_modelos.get('mas_ligero'):
-                        fortalezas.append("✅ Menor uso de memoria")
+                        fortalezas.append(get_text('ui_menor_uso_memoria', st.session_state.language, '✅ Menor uso de memoria'))
                     if pred == mejores_modelos.get('mas_eficiente'):
-                        fortalezas.append("✅ Mejor relación confianza/tiempo")
+                        fortalezas.append(get_text('ui_mejor_relacion_confianza', st.session_state.language, '✅ Mejor relación confianza/tiempo'))
                     
                     # Agregar fortalezas generales
                     for ventaja in info['ventajas']:
@@ -1491,7 +1500,7 @@ Arquitecturas evaluadas:
                         st.markdown(fortaleza)
                 
                 with col2:
-                    st.markdown("**🔴 Áreas de mejora:**")
+                    st.markdown(get_text('weaknesses', st.session_state.language, "**🔴 Áreas de mejora:**"))
                     debilidades = []
                     
                     if pred != mejores_modelos.get('mayor_confianza'):
@@ -1505,7 +1514,7 @@ Arquitecturas evaluadas:
                         st.markdown(debilidad)
                 
                 # Métricas técnicas
-                st.markdown("**📊 Métricas Técnicas:**")
+                st.markdown(get_text('technical_metrics', st.session_state.language, get_text('technical_details', st.session_state.language, "**📊 Métricas Técnicas:**")))
                 st.markdown(f"""
                 - **Parámetros**: {pred['conteo_parametros']:,}
                 - **Tiempo de predicción**: {pred['tiempo_prediccion']:.3f}s
@@ -1515,33 +1524,33 @@ Arquitecturas evaluadas:
                 """)
         
         # Recomendaciones de uso
-        st.markdown("### 💡 RECOMENDACIONES DE USO")
+        st.markdown(get_text('ui_recomendaciones_de_uso', st.session_state.language, "### 💡 RECOMENDACIONES DE USO"))
         
         rec_col1, rec_col2, rec_col3 = st.columns(3)
         
         with rec_col1:
-            st.markdown("""
+            st.markdown(get_text('ui_aplicaciones_clnicas_usa_el', st.session_state.language, """
             **🏥 Aplicaciones Clínicas:**
             - Usa el modelo con **mayor confianza**
             - Prioriza precisión sobre velocidad
             - Ideal para diagnósticos complejos
-            """)
+            """))
         
         with rec_col2:
-            st.markdown("""
+            st.markdown(get_text('ui_aplicaciones_mviles_usa_el', st.session_state.language, """
             **📱 Aplicaciones Móviles:**
             - Usa el modelo **más rápido y ligero**
             - Balance entre precisión y recursos
             - Ideal para apps en tiempo real
-            """)
+            """))
         
         with rec_col3:
-            st.markdown("""
+            st.markdown(get_text('ui_sistemas_de_produccin_usa', st.session_state.language, """
             **🔄 Sistemas de Producción:**
             - Usa el modelo **más eficiente**
             - Considera el volumen de procesamiento
             - Ideal para escalabilidad
-            """)
+            """))
 
     
     def generar_reporte_pdf_completo(self, predicciones, imagen, marca_tiempo_analisis):
@@ -1586,7 +1595,8 @@ Arquitecturas evaluadas:
             
             pdf.cell(0, 6, f'Diagnóstico principal: {info_clase.get("nombre", clase_predicha)}', 0, 1)
             pdf.cell(0, 6, f'Nivel de confianza: {mejor_general["confianza"]:.1%}', 0, 1)
-            pdf.cell(0, 6, f'Gravedad: {info_clase.get("gravedad", "No especificada")}', 0, 1)
+            unspec_text = get_text("unspecified", st.session_state.language, "No especificada")
+            pdf.cell(0, 6, f'Gravedad: {info_clase.get("gravedad", unspec_text)}', 0, 1)
             pdf.ln(8)
             
             # Agregar imagen de manera segura
@@ -1631,11 +1641,11 @@ Arquitecturas evaluadas:
             
             # Tabla comparativa
             pdf.set_font('Arial', 'B', 10)
-            pdf.cell(50, 8, 'Arquitectura', 1, 0, 'C')
-            pdf.cell(35, 8, 'Confianza', 1, 0, 'C')
+            pdf.cell(50, 8, get_text('architecture', st.session_state.language, 'Arquitectura'), 1, 0, 'C')
+            pdf.cell(35, 8, get_text('confidence_table', st.session_state.language, 'Confianza'), 1, 0, 'C')
             pdf.cell(30, 8, 'Tiempo (ms)', 1, 0, 'C')
             pdf.cell(25, 8, 'Tamaño (MB)', 1, 0, 'C')
-            pdf.cell(30, 8, 'Eficiencia', 1, 1, 'C')
+            pdf.cell(30, 8, get_text('efficiency_table', st.session_state.language, 'Eficiencia'), 1, 1, 'C')
             
             pdf.set_font('Arial', '', 9)
             for pred in predicciones:
@@ -1665,7 +1675,8 @@ Arquitecturas evaluadas:
                 
                 pdf.set_font('Arial', '', 10)
                 pdf.cell(0, 5, f'Descripción: {info_clase.get("descripcion", "No disponible")}', 0, 1)
-                pdf.cell(0, 5, f'Gravedad: {info_clase.get("gravedad", "No especificada")}', 0, 1)
+                unspec_text = get_text('unspecified', st.session_state.language, "No especificada")
+                pdf.cell(0, 6, f'Gravedad: {info_clase.get("gravedad", unspec_text)}', 0, 1)
                 pdf.cell(0, 5, f'Tratamiento: {info_clase.get("tratamiento", "Consultar especialista")}', 0, 1)
                 pdf.cell(0, 5, f'Pronóstico: {info_clase.get("pronostico", "Variable")}', 0, 1)
                 pdf.ln(5)
@@ -1843,14 +1854,14 @@ Arquitecturas evaluadas:
     def mostrar_seccion_reportes_avanzados(self, predicciones, imagen, marca_tiempo_analisis):
         """Sección avanzada de reportes y exportación"""
         st.markdown("---")
-        st.header("📋 SISTEMA AVANZADO DE REPORTES")
+        st.header(get_text('advanced_reports_title', st.session_state.language, "📋 SISTEMA AVANZADO DE REPORTES"))
         
         # Métricas de cobertura del sistema
         col1, col2, col3, col4 = st.columns(4)
         
         with col1:
             st.metric(
-                label="🏥 Enfermedades Detectables",
+                label=get_text('detectable_diseases', st.session_state.language, "🏥 Enfermedades Detectables"),
                 value="10",
                 delta="6 más que sistemas básicos",
                 help="Nuestro sistema detecta 10 vs 4 de sistemas convencionales"
@@ -1858,7 +1869,7 @@ Arquitecturas evaluadas:
         
         with col2:
             st.metric(
-                label="🧠 Arquitecturas CNN",
+                label=get_text('cnn_architectures', st.session_state.language, "🧠 Arquitecturas CNN"),
                 value=len(predicciones),
                 delta="Análisis multi-arquitectura",
                 help="Comparación simultánea de múltiples modelos"
@@ -1867,7 +1878,7 @@ Arquitecturas evaluadas:
         with col3:
             diagnosticos_unicos = len(set(pred['clase_predicha'] for pred in predicciones))
             st.metric(
-                label="🎯 Diagnósticos Únicos",
+                label=get_text('unique_diagnoses', st.session_state.language, "🎯 Diagnósticos Únicos"),
                 value=diagnosticos_unicos,
                 delta="En este análisis",
                 help="Número de diagnósticos diferentes detectados"
@@ -1876,32 +1887,32 @@ Arquitecturas evaluadas:
         with col4:
             confianza_promedio = np.mean([pred['confianza'] for pred in predicciones])
             st.metric(
-                label="📊 Confianza Promedio",
+                label=get_text('average_confidence', st.session_state.language, "📊 Confianza Promedio"),
                 value=f"{confianza_promedio:.1%}",
                 delta=f"±{np.std([pred['confianza'] for pred in predicciones]):.1%}",
                 help="Confianza promedio entre todas las arquitecturas"
             )
         
         # Sección de exportación
-        st.markdown("### 📤 Exportar Análisis")
+        st.markdown(get_text('ui_exportar_anlisis', st.session_state.language, "### 📤 Exportar Análisis"))
         
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            if st.button("📄 Generar Reporte PDF Completo", type="primary", use_container_width=True, key="boton_pdf"):
+            if st.button(get_text('generate_pdf', st.session_state.language, "📄 Generar Reporte PDF Completo"), type="primary", use_container_width=True, key="boton_pdf"):
                 try:
                     estado_pdf = st.empty()
-                    estado_pdf.info("🔄 Generando reporte PDF profesional...")
+                    estado_pdf.info(get_text('generating_pdf', st.session_state.language, "🔄 Generando reporte PDF profesional..."))
                     archivo_pdf = self.generar_reporte_pdf_completo(predicciones, imagen, marca_tiempo_analisis)
                     
                     if archivo_pdf and os.path.exists(archivo_pdf):
-                        estado_pdf.success("✅ PDF generado exitosamente!")
+                        estado_pdf.success(get_text('pdf_generated', st.session_state.language, "✅ PDF generado exitosamente!"))
                         
                         with open(archivo_pdf, "rb") as f:
                             bytes_pdf = f.read()
                         
                         st.download_button(
-                            label="⬇️ DESCARGAR REPORTE PDF",
+                            label=get_text('download_pdf', st.session_state.language, "⬇️ DESCARGAR REPORTE PDF"),
                             data=bytes_pdf,
                             file_name=f"reporte_diagnostico_ocular_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
                             mime="application/pdf",
@@ -1916,27 +1927,27 @@ Arquitecturas evaluadas:
                         except:
                             pass
                     else:
-                        st.error("❌ Error generando el reporte PDF")
+                        st.error(get_text('pdf_error', st.session_state.language, "❌ Error generando el reporte PDF"))
                         
                 except Exception as e:
                     st.error(f"❌ Error: {str(e)}")
         
         with col2:
-            if st.button("📊 Exportar Datos Técnicos (JSON)", use_container_width=True, key="boton_json"):
+            if st.button(get_text('export_json', st.session_state.language, "📊 Exportar Datos Técnicos (JSON)"), use_container_width=True, key="boton_json"):
                 try:
                     estado_json = st.empty()
-                    estado_json.info("🔄 Exportando datos técnicos...")
+                    estado_json.info(get_text('exporting_data', st.session_state.language, "🔄 Exportando datos técnicos..."))
                     
                     archivo_json = self.exportar_datos_tecnicos(predicciones, marca_tiempo_analisis)
                     
                     if archivo_json and os.path.exists(archivo_json):
-                        estado_json.success("✅ Datos técnicos exportados!")
+                        estado_json.success(get_text('data_exported', st.session_state.language, "✅ Datos técnicos exportados!"))
                         
                         with open(archivo_json, "r", encoding='utf-8') as f:
                             datos_json = f.read()
                         
                         st.download_button(
-                            label="⬇️ DESCARGAR DATOS JSON",
+                            label=get_text('download_json', st.session_state.language, "⬇️ DESCARGAR DATOS JSON"),
                             data=datos_json,
                             file_name=f"analisis_tecnico_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                             mime="application/json",
@@ -1949,39 +1960,39 @@ Arquitecturas evaluadas:
                         except:
                             pass
                     else:
-                        st.error("❌ Error exportando datos técnicos")
+                        st.error(get_text('data_error', st.session_state.language, "❌ Error exportando datos técnicos"))
                         
                 except Exception as e:
                     st.error(f"❌ Error: {str(e)}")
         
         with col3:
-            if st.button("📈 Exportar CSV Comparativo", use_container_width=True, key="boton_csv"):
+            if st.button(get_text('export_csv', st.session_state.language, "📈 Exportar CSV Comparativo"), use_container_width=True, key="boton_csv"):
                 try:
                     estado_csv = st.empty()
-                    estado_csv.info("🔄 Preparando CSV...")
+                    estado_csv.info(get_text('preparing_csv', st.session_state.language, "🔄 Preparando CSV..."))
                     
                     df_exportar = pd.DataFrame([
                         {
                             'Marca_Tiempo': marca_tiempo_analisis,
-                            'Arquitectura': pred['arquitectura'].replace('_', ' '),
-                            'Diagnóstico': pred['clase_predicha'],
-                            'Diagnóstico_ES': self.informacion_clases.get(pred['clase_predicha'], {}).get('nombre', pred['clase_predicha']),
-                            'Confianza': pred['confianza'],
+                            get_text('architecture', st.session_state.language, 'Arquitectura'): pred['arquitectura'].replace('_', ' '),
+                            get_text('diagnosis_en', st.session_state.language, 'Diagnóstico'): pred['clase_predicha'],
+                            get_text('diagnosis_es', st.session_state.language, 'Diagnóstico_ES'): self.informacion_clases.get(pred['clase_predicha'], {}).get('nombre', pred['clase_predicha']),
+                            get_text('confidence_table', st.session_state.language, 'Confianza'): pred['confianza'],
                             'Tiempo_ms': pred['tiempo_prediccion'] * 1000,
                             'Tamaño_MB': pred['tamaño_modelo'],
-                            'Parámetros': pred['conteo_parametros'],
-                            'Eficiencia': pred.get('eficiencia', 0),
+                            get_text('parameters_table', st.session_state.language, get_text('parameters_count', st.session_state.language, 'Parámetros')): pred['conteo_parametros'],
+                            get_text('efficiency_table', st.session_state.language, 'Eficiencia'): pred.get('eficiencia', 0),
                             'Score_General': pred.get('score_general', 0),
-                            'Gravedad': self.informacion_clases.get(pred['clase_predicha'], {}).get('gravedad', 'No especificada')
+                            get_text('severity', st.session_state.language, 'Gravedad'): self.informacion_clases.get(pred['clase_predicha'], {}).get('gravedad', get_text('unspecified', st.session_state.language, 'No especificada'))
                         }
                         for pred in predicciones
                     ])
                     
                     datos_csv = df_exportar.to_csv(index=False, encoding='utf-8')
-                    estado_csv.success("✅ CSV listo!")
+                    estado_csv.success(get_text('csv_ready', st.session_state.language, "✅ CSV listo!"))
                     
                     st.download_button(
-                        label="⬇️ DESCARGAR CSV",
+                        label=get_text('download_csv', st.session_state.language, "⬇️ DESCARGAR CSV"),
                         data=datos_csv,
                         file_name=f"analisis_comparativo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                         mime="text/csv",
@@ -1994,19 +2005,21 @@ Arquitecturas evaluadas:
         
         # Información adicional sobre las descargas
         st.markdown("---")
-        st.info("""
+        st.info(get_text('ui_informacin_sobre_las_descargas', st.session_state.language, """
         💡 **Información sobre las descargas:**
         - **PDF**: Reporte completo con análisis clínico y recomendaciones técnicas
         - **JSON**: Datos técnicos estructurados para análisis posterior 
         - **CSV**: Tabla comparativa simple para Excel/análisis estadístico
         
         📁 Los archivos se descargan automáticamente a tu carpeta de Descargas
-        """)
+        """))
     
     # ========== FUNCIÓN EJECUTAR PRINCIPAL (MODIFICADA) ==========
     def ejecutar(self):
         """Ejecuta la aplicación principal CON ANÁLISIS ESTADÍSTICO"""
         # Inicializar session state
+        if 'language' not in st.session_state:
+            st.session_state.language = 'es'
         if 'analisis_completado' not in st.session_state:
             st.session_state.analisis_completado = False
         if 'predicciones' not in st.session_state:
@@ -2022,30 +2035,46 @@ Arquitecturas evaluadas:
         self.mostrar_encabezado()
         
         # Sidebar
-        st.sidebar.markdown("## 🎛️ Panel de Control")
+        st.sidebar.markdown(f"## {get_text('sidebar_title', st.session_state.language)}")
+        
+        idiomas = get_available_languages()
+        idx_idioma = list(idiomas.keys()).index(st.session_state.language) if st.session_state.language in idiomas else 0
+        
+        idioma_seleccionado = st.sidebar.selectbox(
+            get_text('select_language', st.session_state.language),
+            options=list(idiomas.keys()),
+            format_func=lambda x: idiomas[x],
+            index=idx_idioma
+        )
+        
+        if idioma_seleccionado != st.session_state.language:
+            st.session_state.language = idioma_seleccionado
+            st.experimental_rerun()
+            
         st.sidebar.markdown("---")
         
         # Cargar modelos
         if self.modelos is None:
-            with st.spinner("🔄 Cargando las 3 arquitecturas..."):
+            with st.spinner(get_text('loading_models', st.session_state.language, "🔄 Cargando las 3 arquitecturas...")):
                 self.modelos, self.nombres_clases, self.nombres_clases_individuales = self.cargar_modelos()
         
         # Pestañas principales
-        tab1, tab2, tab3 = st.tabs(["🔬 Análisis Individual", "📊 Evaluación Estadística", "⚙️ Entrenamiento"])
+        tab1, tab2, tab3 = st.tabs([
+            get_text('tab_individual', st.session_state.language, "🔬 Análisis Individual"), 
+            get_text('tab_statistical', st.session_state.language, "📊 Evaluación Estadística"), 
+            get_text('tab_training', st.session_state.language, "⚙️ Entrenamiento")
+        ])
         
         with tab3:
-            st.header("⚙️ Entrenamiento de Modelos Reales")
-            st.write("Entrena los modelos directamente sobre la carpeta `Dataset` con GPU.")
+            st.header(get_text('real_models_training_header', st.session_state.language, "⚙️ Entrenamiento de Modelos Reales"))
+            st.write(get_text('real_models_training_desc', st.session_state.language, "Entrena los modelos directamente sobre la carpeta `Dataset` con GPU."))
             col1, col2 = st.columns(2)
             
             with col1:
-                st.subheader("1. CNN Original")
-                st.write("Entrena el modelo base (eye_disease_model).")
-                if st.button("🚀 Entrenar CNN Original", type="primary"):
-                    import subprocess
-                    import sys
-                    import os
-                    st.info("Entrenando CNN Original...")
+                st.subheader(get_text('cnn_original_subheader', st.session_state.language, "1. CNN Original"))
+                st.write(get_text('cnn_original_desc', st.session_state.language, "Entrena el modelo base (eye_disease_model)."))
+                if st.button(get_text('train_cnn_button', st.session_state.language, "🚀 Entrenar CNN Original"), type="primary"):
+                    st.info(get_text('ui_entrenando_cnn_original', st.session_state.language, "Entrenando CNN Original..."))
                     log_container = st.empty()
                     try:
                         custom_env = os.environ.copy()
@@ -2069,20 +2098,22 @@ Arquitecturas evaluadas:
                         process.wait()
                         if process.returncode == 0:
                             st.cache_resource.clear()
-                            st.success("✅ Modelo CNN Original guardado. ¡Refresca la página para usarlo!")
+                            st.success(get_text('cnn_saved_success', st.session_state.language, "✅ Modelo CNN Original guardado. ¡Refresca la página para usarlo!"))
                         else:
-                            st.error(f"❌ Error (Código {process.returncode})")
+                            st.error(get_text('cnn_error', st.session_state.language, f"❌ Error (Código {process.returncode})"))
                     except Exception as e:
                         st.error(f"Error lanzando proceso: {e}")
+                    
+                if os.path.exists('medical_training_results.png'):
+                    st.image('medical_training_results.png', caption=get_text('cnn_training_metrics', st.session_state.language, "Métricas de Entrenamiento - CNN Original"), use_column_width=True)
+                elif os.path.exists('training_results.png'):
+                    st.image('training_results.png', caption=get_text('cnn_training_metrics', st.session_state.language, "Métricas de Entrenamiento - CNN Original"), use_column_width=True)
                         
             with col2:
-                st.subheader("2. Ensemble (EfficientNet + ResNet)")
-                st.write("Entrena los dos modelos pesados. Requiere el modelo base primero.")
-                if st.button("🚀 Entrenar Ensemble", type="primary"):
-                    import subprocess
-                    import sys
-                    import os
-                    st.info("Entrenando Ensemble (Esto tomará bastante tiempo)...")
+                st.subheader(get_text('ensemble_subheader', st.session_state.language, "2. Ensemble (EfficientNet + ResNet)"))
+                st.write(get_text('ensemble_desc', st.session_state.language, "Entrena los dos modelos pesados. Requiere el modelo base primero."))
+                if st.button(get_text('train_ensemble_button', st.session_state.language, "🚀 Entrenar Ensemble"), type="primary"):
+                    st.info(get_text('ui_entrenando_ensemble_esto_tomar', st.session_state.language, "Entrenando Ensemble (Esto tomará bastante tiempo)..."))
                     log_container = st.empty()
                     try:
                         custom_env = os.environ.copy()
@@ -2106,26 +2137,29 @@ Arquitecturas evaluadas:
                         process_ens.wait()
                         if process_ens.returncode == 0:
                             st.cache_resource.clear()
-                            st.success("🎉 ¡Modelos de Ensemble guardados! Refresca la página.")
+                            st.success(get_text('ensemble_saved_success', st.session_state.language, "🎉 ¡Modelos de Ensemble guardados! Refresca la página."))
                         else:
-                            st.error(f"❌ Error en el entrenamiento del Ensemble (Código {process_ens.returncode})")
+                            st.error(get_text('ensemble_error', st.session_state.language, f"❌ Error en el entrenamiento del Ensemble (Código {process_ens.returncode})"))
                     except Exception as e:
-                        st.error(f"❌ Ocurrió un error al lanzar el proceso: {e}")
+                        st.error(get_text('ensemble_launch_error', st.session_state.language, f"❌ Ocurrió un error al lanzar el proceso: {e}"))
+                
+                if os.path.exists('ensemble_medical_results.png'):
+                    st.image('ensemble_medical_results.png', caption=get_text('ensemble_training_metrics', st.session_state.language, "Métricas de Entrenamiento - Ensemble"), use_column_width=True)
 
         if len(self.modelos) < 3:
-            st.warning("⚠️ Faltan algunos modelos. Ve a la pestaña '⚙️ Entrenamiento' para generarlos.")
+            st.warning(get_text('missing_models_warning', st.session_state.language, "⚠️ Faltan algunos modelos. Ve a la pestaña '⚙️ Entrenamiento' para generarlos."))
 
             
         # Info en sidebar
-        st.sidebar.success(f"✅ {len(self.modelos)} arquitecturas cargadas")
+        st.sidebar.success(get_text('architectures_loaded', st.session_state.language, f"✅ {len(self.modelos)} arquitecturas cargadas").replace("{len}", str(len(self.modelos))))
         
-        if st.sidebar.button("🧹 Limpiar Caché y Recargar Modelos"):
+        if st.sidebar.button(get_text('clear_cache_button', st.session_state.language, "🧹 Limpiar Caché y Recargar Modelos")):
             st.cache_resource.clear()
             st.experimental_rerun()
             
         with tab1:
             # Botón para limpiar análisis
-            if st.sidebar.button("🔄 Nuevo Análisis", help="Limpia el análisis actual"):
+            if st.sidebar.button(get_text('new_analysis', st.session_state.language, "🔄 Nuevo Análisis"), help=get_text('new_analysis_help', st.session_state.language, "Limpia el análisis actual")):
                 st.session_state.analisis_completado = False
                 st.session_state.predicciones = None
                 st.session_state.imagen_analisis = None
@@ -2139,13 +2173,13 @@ Arquitecturas evaluadas:
             
             # Si ya hay un análisis completo, mostrar resultados
             if st.session_state.analisis_completado and st.session_state.predicciones:
-                st.success("🎉 **Análisis ya completado!** Puedes descargar los reportes o hacer un nuevo análisis.")
+                st.success(get_text('analysis_completed', st.session_state.language, "🎉 **Análisis ya completado!** Puedes descargar los reportes o hacer un nuevo análisis."))
                 
                 # Mostrar imagen analizada
                 if st.session_state.imagen_analisis:
                     col1, col2, col3 = st.columns([1, 2, 1])
                     with col2:
-                        st.image(st.session_state.imagen_analisis, caption="Imagen analizada", use_column_width=True)
+                        st.image(st.session_state.imagen_analisis, caption=get_text('analyzed_image', st.session_state.language, "Imagen analizada"), use_column_width=True)
                 
                 # Mostrar todos los resultados usando el estado guardado
                 predicciones = st.session_state.predicciones
@@ -2166,19 +2200,19 @@ Arquitecturas evaluadas:
                 self.mostrar_seccion_reportes_avanzados(predicciones, st.session_state.imagen_analisis, st.session_state.marca_tiempo_analisis)
                 
                 # Tabla resumen
-                with st.expander("📊 Tabla Resumen de Métricas"):
+                with st.expander(get_text('summary_table', st.session_state.language, "📊 Tabla Resumen de Métricas")):
                     df_resumen = pd.DataFrame([
                         {
-                            'Arquitectura': pred['arquitectura'].replace('_', ' '),
-                            'Diagnóstico': pred['clase_predicha'],
-                            'Diagnóstico_ES': self.informacion_clases.get(pred['clase_predicha'], {}).get('nombre', pred['clase_predicha']),
-                            'Confianza': f"{pred['confianza']:.1%}",
-                            'Tiempo': f"{pred['tiempo_prediccion']:.3f}s",
-                            'Tamaño': f"{pred['tamaño_modelo']:.1f}MB",
-                            'Parámetros': f"{pred['conteo_parametros']:,}",
-                            'Eficiencia': f"{pred.get('eficiencia', 0):.1f}",
-                            'Score General': f"{pred.get('score_general', 0):.3f}",
-                            'Gravedad': self.informacion_clases.get(pred['clase_predicha'], {}).get('gravedad', 'No especificada')
+                            get_text('architecture', st.session_state.language, 'Arquitectura'): pred['arquitectura'].replace('_', ' '),
+                            get_text('diagnosis_en', st.session_state.language, 'Diagnóstico'): pred['clase_predicha'],
+                            get_text('diagnosis_es', st.session_state.language, 'Diagnóstico_ES'): self.informacion_clases.get(pred['clase_predicha'], {}).get('nombre', pred['clase_predicha']),
+                            get_text('confidence_table', st.session_state.language, 'Confianza'): f"{pred['confianza']:.1%}",
+                            get_text('time_table', st.session_state.language, 'Tiempo'): f"{pred['tiempo_prediccion']:.3f}s",
+                            get_text('size_table', st.session_state.language, 'Tamaño'): f"{pred['tamaño_modelo']:.1f}MB",
+                            get_text('parameters_table', st.session_state.language, get_text('parameters_count', st.session_state.language, 'Parámetros')): f"{pred['conteo_parametros']:,}",
+                            get_text('efficiency_table', st.session_state.language, 'Eficiencia'): f"{pred.get('eficiencia', 0):.1f}",
+                            get_text('general_score_table', st.session_state.language, 'Score General'): f"{pred.get('score_general', 0):.3f}",
+                            get_text('severity', st.session_state.language, 'Gravedad'): self.informacion_clases.get(pred['clase_predicha'], {}).get('gravedad', get_text('unspecified', st.session_state.language, 'No especificada'))
                         }
                         for pred in predicciones
                     ])
@@ -2190,11 +2224,11 @@ Arquitecturas evaluadas:
                 
             else:
                 # Interfaz para nuevo análisis
-                st.markdown("## 📸 Subir Imagen para Comparar Arquitecturas")
+                st.markdown(f"## {get_text('upload_title', st.session_state.language)}")
                 archivo_subido = st.file_uploader(
-                    "Selecciona una imagen de retina para la batalla de arquitecturas",
+                    get_text('upload_help', st.session_state.language),
                     type=['png', 'jpg', 'jpeg'],
-                    help="La imagen será analizada por las 3 arquitecturas simultáneamente"
+                    help=get_text('upload_description', st.session_state.language, "La imagen será analizada por las 3 arquitecturas simultáneamente")
                 )
                 
                 if archivo_subido is not None:
@@ -2202,21 +2236,21 @@ Arquitecturas evaluadas:
                     col1, col2, col3 = st.columns([1, 2, 1])
                     with col2:
                         imagen = Image.open(archivo_subido)
-                        st.image(imagen, caption="Imagen para la batalla", use_column_width=True)
+                        st.image(imagen, caption=get_text('image_caption', st.session_state.language, "Imagen para la batalla"), use_column_width=True)
                     
                     # Botón de análisis
-                    if st.button("🚀 INICIAR BATALLA DE ARQUITECTURAS", type="primary", use_container_width=True):
+                    if st.button(get_text('battle_button', st.session_state.language, "🚀 INICIAR BATALLA DE ARQUITECTURAS"), type="primary", use_container_width=True):
                         
                         marca_tiempo_analisis = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                         
                         # Preprocesamiento y predicciones
-                        with st.spinner("🔄 Procesando imagen para todas las arquitecturas..."):
+                        with st.spinner(get_text('processing_image', st.session_state.language, "🔄 Procesando imagen para todas las arquitecturas...")):
                             array_img = self.preprocesar_imagen(imagen)
                         
                         if array_img is not None:
                             predicciones = []
                             
-                            with st.spinner("🏗️ Analizando con las 3 arquitecturas..."):
+                            with st.spinner(get_text('analyzing_architectures', st.session_state.language, "🏗️ Analizando con las 3 arquitecturas...")):
                                 barra_progreso = st.progress(0)
                                 
                                 for i, (nombre_arq, modelo) in enumerate(self.modelos.items()):
@@ -2226,7 +2260,7 @@ Arquitecturas evaluadas:
                                     barra_progreso.progress((i + 1) / len(self.modelos))
                             
                             if len(predicciones) >= 2:
-                                st.success("✅ ¡Batalla completada! Analizando resultados...")
+                                st.success(get_text('battle_completed', st.session_state.language, "✅ ¡Batalla completada! Analizando resultados..."))
                                 
                                 # Calcular scores adicionales
                                 for pred in predicciones:
@@ -2251,7 +2285,7 @@ Arquitecturas evaluadas:
                                 st.experimental_rerun()
                             
                             else:
-                                st.error("❌ Error en las predicciones")
+                                st.error(get_text('prediction_error', st.session_state.language, "❌ Error en las predicciones"))
         
         with tab2:
             # NUEVA PESTAÑA: ANÁLISIS ESTADÍSTICO
@@ -2261,53 +2295,60 @@ Arquitecturas evaluadas:
         
         # Footer técnico (expandido)
         st.markdown("---")
-        st.markdown("""
-        ### ⚙️ Sobre Este Sistema Avanzado con Análisis Estadístico
+        footer_key = 'system_footer_full'
+        footer_text = get_text(footer_key, st.session_state.language, None)
         
-        **🚀 Sistema de Diagnóstico Ocular de Nueva Generación**
-        
-        **🔬 Nuevas Funcionalidades Estadísticas:**
-        - **📊 Coeficiente de Matthews (MCC)**: Métrica balanceada para clases desbalanceadas
-        - **🔬 Prueba de McNemar**: Comparación estadística rigurosa entre modelos
-        - **📈 Intervalos de Confianza Bootstrap**: Robustez estadística (95% CI)
-        - **🎭 Matrices de Confusión**: Análisis detallado por clase
-        - **📋 Reportes Estadísticos**: Exportación completa de resultados
-        
-        **🔬 Ventajas Competitivas:**
-        - **10 enfermedades especializadas** vs 4 básicas de sistemas convencionales
-        - **Análisis multi-arquitectura** con comparación simultánea de CNNs
-        - **Evaluación estadística rigurosa** con pruebas de significancia
-        - **Reportes profesionales PDF** con análisis clínico y estadístico
-        - **Exportación técnica completa** (JSON, CSV, TXT) para investigación
-        - **Recomendaciones contextuales** basadas en evidencia estadística
-        
-        **🏗️ Arquitecturas Implementadas:**
-        - **🧠 CNN Híbrida (MobileNetV2)**: Transfer Learning especializado
-        - **⚡ EfficientNet-B0**: Compound Scaling balanceado
-        - **🔗 ResNet-50 V2**: Conexiones residuales profundas
-        
-        **📊 Métricas Evaluadas:**
-        - 🎯 **Precisión**: Confianza, MCC y consenso diagnóstico
-        - ⚡ **Velocidad**: Tiempo de inferencia optimizado
-        - 💾 **Eficiencia**: Uso de memoria y escalabilidad
-        - 🏆 **Balance**: Score general multi-criterio
-        - 📈 **Significancia**: Pruebas estadísticas inferenciales
-        
-        **🎯 Aplicaciones:**
-        - 🏥 **Clínicas**: Diagnóstico de alta precisión con validación estadística
-        - 📱 **Móviles**: Apps de telemedicina con métricas robustas
-        - 🔄 **Producción**: Sistemas hospitalarios escalables con evidencia estadística
-        - 🔬 **Investigación**: Datos completos para publicaciones científicas
-        
-        **💡 Innovación**: Primer sistema que combina múltiples arquitecturas CNN con 
-        análisis estadístico inferencial completo para diagnóstico ocular especializado.
-        
-        **📚 Métodos Estadísticos:**
-        - **MCC**: Coeficiente de Correlación de Matthews para métricas balanceadas
-        - **McNemar**: Prueba chi-cuadrado para comparación de clasificadores
-        - **Bootstrap**: Intervalos de confianza no paramétricos
-        - **Corrección de Yates**: Para muestras pequeñas en McNemar
-        """)
+        if footer_text and footer_text != f"[{footer_key}]":
+            st.markdown(footer_text)
+        else:
+            # Fallback in Spanish if translation missing
+            st.markdown(f"""
+            ### {get_text('system_title', st.session_state.language, get_text('system_title', st.session_state.language, '⚙️ Sobre Este Sistema Avanzado con Análisis Estadístico'))}
+            
+            **{get_text('system_subtitle', st.session_state.language, get_text('system_subtitle', st.session_state.language, '🚀 Sistema de Diagnóstico Ocular de Nueva Generación'))}**
+            
+            **🔬 Nuevas Funcionalidades Estadísticas:**
+            - **📊 Coeficiente de Matthews (MCC)**: Métrica balanceada para clases desbalanceadas
+            - **🔬 Prueba de McNemar**: Comparación estadística rigurosa entre modelos
+            - **📈 Intervalos de Confianza Bootstrap**: Robustez estadística (95% CI)
+            - **🎭 Matrices de Confusión**: Análisis detallado por clase
+            - **📋 Reportes Estadísticos**: Exportación completa de resultados
+            
+            **🔬 Ventajas Competitivas:**
+            - **10 enfermedades especializadas** vs 4 básicas de sistemas convencionales
+            - **Análisis multi-arquitectura** con comparación simultánea de CNNs
+            - **Evaluación estadística rigurosa** con pruebas de significancia
+            - **Reportes profesionales PDF** con análisis clínico y estadístico
+            - **Exportación técnica completa** (JSON, CSV, TXT) para investigación
+            - **Recomendaciones contextuales** basadas en evidencia estadística
+            
+            **🏗️ Arquitecturas Implementadas:**
+            - **🧠 CNN Híbrida (MobileNetV2)**: Transfer Learning especializado
+            - **⚡ EfficientNet-B0**: Compound Scaling balanceado
+            - **🔗 ResNet-50 V2**: Conexiones residuales profundas
+            
+            **📊 Métricas Evaluadas:**
+            - 🎯 **Precisión**: Confianza, MCC y consenso diagnóstico
+            - ⚡ **Velocidad**: Tiempo de inferencia optimizado
+            - 💾 **Eficiencia**: Uso de memoria y escalabilidad
+            - 🏆 **Balance**: Score general multi-criterio
+            - 📈 **Significancia**: Pruebas estadísticas inferenciales
+            
+            **🎯 Aplicaciones:**
+            - 🏥 **Clínicas**: Diagnóstico de alta precisión con validación estadística
+            - 📱 **Móviles**: Apps de telemedicina con métricas robustas
+            - 🔄 **Producción**: Sistemas hospitalarios escalables con evidencia estadística
+            - 🔬 **Investigación**: Datos completos para publicaciones científicas
+            
+            **💡 Innovación**: Primer sistema que combina múltiples arquitecturas CNN con 
+            análisis estadístico inferencial completo para diagnóstico ocular especializado.
+            
+            **📚 Métodos Estadísticos:**
+            - **MCC**: Coeficiente de Correlación de Matthews para métricas balanceadas
+            - **McNemar**: Prueba chi-cuadrado para comparación de clasificadores
+            - **Bootstrap**: Intervalos de confianza no paramétricos
+            - **Corrección de Yates**: Para muestras pequeñas en McNemar
+            """)
 
 # Ejecutar aplicación
 if __name__ == "__main__":

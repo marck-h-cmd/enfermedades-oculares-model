@@ -1,0 +1,22 @@
+[
+  "1040: Sistema: Comparaci\u00f3n de Arquitecturas CN",
+  "1199: st.markdown(f\"\u2022 **Par\u00e1metros:** {info['c",
+  "1225: # Diagn\u00f3stico",
+  "1230: st.success(f\"**Diagn\u00f3stico:** {nombre_es",
+  "1240: st.markdown(get_text('technical_metrics'",
+  "1241: st.markdown(f\"\u23f1\ufe0f **Tiempo:** {pred['tiem",
+  "1242: st.markdown(f\"\ud83d\udcbe **Tama\u00f1o:** {pred['tama\u00f1",
+  "1243: st.markdown(f\"\ud83d\udd22 **Par\u00e1metros:** {pred['c",
+  "1511: debilidades.append(f\"\ud83d\udd38 Tama\u00f1o: {pred['ta",
+  "1517: st.markdown(get_text('technical_metrics'",
+  "1596: pdf.cell(0, 6, f'Diagn\u00f3stico principal: ",
+  "1714: pdf.cell(0, 5, f'Tiempo: {ganador[\"tiemp",
+  "1716: pdf.cell(0, 5, f'Tama\u00f1o: {ganador[\"tama\u00f1",
+  "1881: label=get_text('unique_diagnoses', st.se",
+  "1978: get_text('diagnosis_en', st.session_stat",
+  "1979: get_text('diagnosis_es', st.session_stat",
+  "2207: get_text('diagnosis_en', st.session_stat",
+  "2208: get_text('diagnosis_es', st.session_stat",
+  "2308: **{get_text('system_subtitle', st.sessio",
+  "2338: - \ud83c\udfe5 **Cl\u00ednicas**: Diagn\u00f3stico de alta pr"
+]
