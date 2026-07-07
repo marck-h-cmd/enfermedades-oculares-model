@@ -24,7 +24,7 @@ from scipy.stats import chi2
 from scipy import stats
 import itertools
 from pathlib import Path
-from translation import get_text, get_available_languages
+from i18n import get_text, get_available_languages
 
 warnings.filterwarnings('ignore')
 
