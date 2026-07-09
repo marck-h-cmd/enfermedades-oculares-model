@@ -2122,10 +2122,22 @@ Arquitecturas evaluadas:
                 st.markdown("### 📏 Propiedades de las Imágenes Médicas")
                 col_d, col_e = st.columns(2)
                 with col_d:
-                    fig_width = px.histogram(df_clean, x='Ancho', title='Distribución del Ancho de Imágenes (píxeles)', color_discrete_sequence=['#f59e0b'])
+                    fig_width = px.histogram(
+                        x=df_clean['Ancho'].tolist(),
+                        title='Distribución del Ancho de Imágenes (píxeles)',
+                        labels={'x': 'Ancho'},
+                        color_discrete_sequence=['#f59e0b']
+                    )
+                    fig_width.update_layout(xaxis_title="Ancho", yaxis_title="Cantidad")
                     st.plotly_chart(fig_width, use_container_width=True)
                 with col_e:
-                    fig_size = px.histogram(df_clean, x='TamanoKB', title='Distribución del Tamaño de Archivo (KB)', color_discrete_sequence=['#10b981'])
+                    fig_size = px.histogram(
+                        x=df_clean['TamanoKB'].tolist(),
+                        title='Distribución del Tamaño de Archivo (KB)',
+                        labels={'x': 'Tamaño (KB)'},
+                        color_discrete_sequence=['#10b981']
+                    )
+                    fig_size.update_layout(xaxis_title="Tamaño (KB)", yaxis_title="Cantidad")
                     st.plotly_chart(fig_size, use_container_width=True)
 
     # ========== PESTAÑA: AJUSTE DE HIPERPARÁMETROS (TUNING) ==========
