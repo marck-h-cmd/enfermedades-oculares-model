@@ -28,17 +28,18 @@ from i18n import get_text, get_available_languages
 
 warnings.filterwarnings('ignore')
 
-# Inicializar el lenguaje antes de configurar la página
-if 'language' not in st.session_state:
-    st.session_state.language = 'es'
-
-# Configuración de página
+# Configuración de página (Debe ser el primer comando de Streamlit ejecutado)
 st.set_page_config(
-    page_title=get_text('page_title', st.session_state.language, "🏥 Comparación de 3 Arquitecturas CNN + Estadísticas"),
+    page_title="🏥 Sistema de Diagnóstico Ocular",
     page_icon="👁️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Inicializar el lenguaje después de configurar la página
+if 'language' not in st.session_state:
+    st.session_state['language'] = 'es'
+
 
 class AplicacionTresArquitecturas:
     """Aplicación para comparar 3 arquitecturas CNN con análisis estadístico avanzado"""
@@ -1999,356 +2000,524 @@ Arquitecturas evaluadas:
                         use_container_width=True,
                         key="descargar_csv"
                     )
-                    
                 except Exception as e:
                     st.error(f"❌ Error: {str(e)}")
+
+    # ========== PANTALLA DE LOGIN ==========
+    def mostrar_login(self):
+        """Muestra una pantalla de autenticación elegante al inicio"""
+        if "input_usuario" not in st.session_state:
+            st.session_state.input_usuario = ""
+        if "input_contrasena" not in st.session_state:
+            st.session_state.input_contrasena = ""
+
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.markdown("<br><br>", unsafe_allow_html=True)
+            st.markdown(
+                """
+                <div style='background-color: #1e293b; padding: 35px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); text-align: center;'>
+                    <h2 style='color: #38bdf8; margin-bottom: 5px;'>🏥 SISTEMA DE DIAGNÓSTICO OCULAR</h2>
+                    <p style='color: #94a3b8; font-size: 14px;'>Ingrese sus credenciales de acceso clínico</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Panel de acceso rápido y autocompletado
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                if st.button("⚡ Rellenar admin/admin", use_container_width=True):
+                    st.session_state.input_usuario = "admin"
+                    st.session_state.input_contrasena = "admin"
+                    st.experimental_rerun()
+            with col_b2:
+                if st.button("🚀 Iniciar Sesión Rápido", type="primary", use_container_width=True):
+                    st.session_state.autenticado = True
+                    st.success("✅ Acceso autorizado rápido.")
+                    st.experimental_rerun()
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            with st.form("form_login"):
+                usuario = st.text_input("Usuario Clínico", value=st.session_state.input_usuario, placeholder="admin")
+                contrasena = st.text_input("Contraseña", type="password", value=st.session_state.input_contrasena, placeholder="••••••••")
+                boton_login = st.form_submit_button("Iniciar Sesión", use_container_width=True)
+                
+                if boton_login:
+                    if usuario == "admin" and contrasena == "admin":
+                        st.session_state.autenticado = True
+                        st.success("✅ Acceso autorizado. Cargando sistema...")
+                        st.experimental_rerun()
+                    else:
+                        st.error("❌ Credenciales incorrectas. Verifique e intente nuevamente.")
+
+    # ========== PESTAÑA: EDA / EXPLORACIÓN ==========
+    def mostrar_tab_eda(self):
+        st.header("📊 Análisis Exploratorio de Datos (EDA) y Limpieza")
+        st.write("Escanea y analiza el dataset de entrenamiento para asegurar la calidad de las imágenes médicas y el balance de clases.")
         
-        # Información adicional sobre las descargas
-        st.markdown("---")
-        st.info(get_text('ui_informacin_sobre_las_descargas', st.session_state.language, """
-        💡 **Información sobre las descargas:**
-        - **PDF**: Reporte completo con análisis clínico y recomendaciones técnicas
-        - **JSON**: Datos técnicos estructurados para análisis posterior 
-        - **CSV**: Tabla comparativa simple para Excel/análisis estadístico
+        ruta_dataset = st.text_input("Ruta del Dataset:", value="./Dataset")
+        existe_dataset = os.path.exists(ruta_dataset) and os.path.isdir(ruta_dataset)
+        if not existe_dataset:
+            st.warning(f"⚠️ La ruta '{ruta_dataset}' no existe o no es un directorio válido. "
+                       "Asegúrate de crear la carpeta 'Dataset' en la raíz del proyecto y colocar tus subcarpetas de imágenes (clases) "
+                       "antes de proceder.")
         
-        📁 Los archivos se descargan automáticamente a tu carpeta de Descargas
-        """))
-    
-    # ========== FUNCIÓN EJECUTAR PRINCIPAL (MODIFICADA) ==========
+        col1, col2 = st.columns(2)
+        with col1:
+            mover_corruptas = st.checkbox("Mover imágenes corruptas a carpeta separada (Limpieza automática)", value=True, disabled=not existe_dataset)
+        
+        if st.button("🚀 Iniciar Análisis EDA y Limpieza", type="primary", use_container_width=True, disabled=not existe_dataset):
+            import eda
+            with st.spinner("Analizando dataset... Esto puede tomar unos instantes."):
+                try:
+                    df_clean, df_corrupt, resumen = eda.realizar_eda(ruta_dataset, mover_corruptas)
+                    
+                    st.success("✅ Análisis completado con éxito.")
+                    
+                    # Guardar resumen en session_state
+                    st.session_state.eda_resumen = resumen
+                    st.session_state.eda_df_clean = df_clean
+                    st.session_state.eda_df_corrupt = df_corrupt
+                except Exception as e:
+                    st.error(f"Error al analizar el dataset: {str(e)}")
+                    
+        # Mostrar resultados si existen
+        if 'eda_resumen' in st.session_state:
+            resumen = st.session_state.eda_resumen
+            df_clean = st.session_state.eda_df_clean
+            df_corrupt = st.session_state.eda_df_corrupt
+            
+            col_a, col_b, col_c = st.columns(3)
+            col_a.metric("Imágenes Válidas", resumen['total_imagenes_validas'])
+            col_b.metric("Imágenes Corruptas Detectadas", resumen['total_imagenes_corruptas'])
+            col_c.metric("Resolución Promedio", resumen['resolucion_promedio'])
+            
+            if resumen['total_imagenes_corruptas'] > 0:
+                st.warning(f"⚠️ Se detectaron {resumen['total_imagenes_corruptas']} imágenes corruptas o ilegibles. "
+                           f"Han sido movidas automáticamente a la carpeta `./corruptas_detectadas/` para asegurar la estabilidad del entrenamiento.")
+                with st.expander("Ver lista de archivos corruptos limpiados"):
+                    st.dataframe(df_corrupt, use_container_width=True)
+                    
+            st.markdown("### 📈 Balance y Distribución de Clases")
+            dist_clases = resumen['distribucion_clases']
+            
+            if dist_clases:
+                # Traducir las clases al español en el gráfico
+                nombres_traducidos = [self.informacion_clases.get(c, {}).get('nombre', c) for c in dist_clases.keys()]
+                fig_dist = go.Figure(data=[
+                    go.Bar(x=nombres_traducidos, y=list(dist_clases.values()), marker_color='#38bdf8')
+                ])
+                fig_dist.update_layout(
+                    title="Distribución de Imágenes por Clase",
+                    xaxis_title="Patología Ocular",
+                    yaxis_title="Cantidad de Imágenes",
+                    height=450
+                )
+                st.plotly_chart(fig_dist, use_container_width=True)
+                
+                # Estadísticas de Dimensiones y Archivos
+                st.markdown("### 📏 Propiedades de las Imágenes Médicas")
+                col_d, col_e = st.columns(2)
+                with col_d:
+                    fig_width = px.histogram(df_clean, x='Ancho', title='Distribución del Ancho de Imágenes (píxeles)', color_discrete_sequence=['#f59e0b'])
+                    st.plotly_chart(fig_width, use_container_width=True)
+                with col_e:
+                    fig_size = px.histogram(df_clean, x='TamanoKB', title='Distribución del Tamaño de Archivo (KB)', color_discrete_sequence=['#10b981'])
+                    st.plotly_chart(fig_size, use_container_width=True)
+
+    # ========== PESTAÑA: AJUSTE DE HIPERPARÁMETROS (TUNING) ==========
+    def mostrar_tab_tuning(self):
+        st.header("⚙️ Ajuste Automático de Hiperparámetros (Tuning)")
+        st.write("Optimiza los hiperparámetros (Learning Rate, Dropout y Optimizador) de la red neuronal mediante una búsqueda sistemática rápida.")
+        
+        ruta_dataset = st.text_input("Ruta del Dataset para Tuning:", value="./Dataset", key="tuning_dataset")
+        existe_dataset = os.path.exists(ruta_dataset) and os.path.isdir(ruta_dataset)
+        if not existe_dataset:
+            st.warning(f"⚠️ La ruta '{ruta_dataset}' no existe o no es un directorio válido. "
+                       "Se requiere la carpeta del dataset para realizar la búsqueda de hiperparámetros.")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            epocas_tuning = st.number_input("Épocas por combinación:", min_value=1, max_value=5, value=2, disabled=not existe_dataset)
+        with col2:
+            batch_size_tuning = st.number_input("Tamaño de lote (Batch Size):", min_value=16, max_value=128, value=32, step=16, disabled=not existe_dataset)
+            
+        if st.button("🚀 Iniciar Tuning de Hiperparámetros", type="primary", use_container_width=True, disabled=not existe_dataset):
+            import tuning
+            progreso_bar = st.progress(0)
+            texto_progreso = st.empty()
+            
+            def reportar_progreso(actual, total, mensaje):
+                progreso_bar.progress(actual / total)
+                texto_progreso.markdown(f"**[{actual}/{total}]** {mensaje}")
+                
+            try:
+                tuner = tuning.TunerHiperparametros(ruta_dataset)
+                mejores_params, historial = tuner.buscar(epocas=epocas_tuning, batch_size=batch_size_tuning, callback_progreso=reportar_progreso)
+                
+                st.success("🎉 ¡Tuning finalizado con éxito!")
+                st.markdown("### 🏆 Mejores Hiperparámetros Encontrados:")
+                
+                st.json(mejores_params)
+                
+                st.markdown("### 📋 Historial de Combinaciones Evaluadas:")
+                df_historial = pd.DataFrame(historial)
+                st.dataframe(df_historial, use_container_width=True)
+                
+                # Guardar mejores parámetros en sesión
+                st.session_state.mejores_hiperparametros = mejores_params
+            except Exception as e:
+                st.error(f"Error durante el tuning: {str(e)}")
+
+    # ========== PESTAÑA: CROSS-VALIDATION ==========
+    def mostrar_tab_cv(self):
+        st.header("🔄 Entrenamiento con Validación Cruzada (K-Fold CV)")
+        st.write("Entrena secuencialmente 3 arquitecturas clásicas y 2 híbridas usando validación cruzada estratificada (K-Fold).")
+        
+        ruta_dataset = st.text_input("Ruta del Dataset de Entrenamiento:", value="./Dataset", key="cv_dataset")
+        existe_dataset = os.path.exists(ruta_dataset) and os.path.isdir(ruta_dataset)
+        if not existe_dataset:
+            st.warning(f"⚠️ La ruta '{ruta_dataset}' no existe o no es un directorio válido. "
+                       "Se requiere la carpeta del dataset con subcarpetas por clase para iniciar la validación cruzada.")
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            k_folds = st.number_input("Folds de Validación Cruzada (K):", min_value=2, max_value=10, value=5, disabled=not existe_dataset)
+        with col2:
+            epocas_cv = st.number_input("Épocas de Entrenamiento por Fold:", min_value=1, max_value=50, value=5, disabled=not existe_dataset)
+        with col3:
+            batch_size_cv = st.number_input("Batch Size:", min_value=8, max_value=128, value=32, step=8, key="cv_batch", disabled=not existe_dataset)
+            
+        modelos_disponibles = {
+            'mobilenet': 'MobileNetV2 (Clásico)',
+            'resnet': 'ResNet50V2 (Clásico)',
+            'efficientnet': 'EfficientNetB0 (Clásico)',
+            'fusion_net': 'Fusión ResNet+MobileNet (Híbrido 1)',
+            'cnn_rf': 'MobileNet + Random Forest (Híbrido 2)'
+        }
+        
+        st.markdown("**Seleccione los modelos a incluir en el entrenamiento:**")
+        modelos_seleccionados = []
+        cols_models = st.columns(5)
+        for idx, (cod, desc) in enumerate(modelos_disponibles.items()):
+            with cols_models[idx]:
+                if st.checkbox(desc, value=True, key=f"chk_model_{cod}", disabled=not existe_dataset):
+                    modelos_seleccionados.append(cod)
+                    
+        if st.button("🚀 Iniciar Validación Cruzada (Entrenamiento)", type="primary", use_container_width=True, disabled=not existe_dataset):
+            if not modelos_seleccionados:
+                st.error("Por favor, seleccione al menos un modelo para entrenar.")
+                return
+                
+            import train_cv
+            progreso_bar = st.progress(0)
+            texto_progreso = st.empty()
+            
+            def reportar_progreso(actual, total, mensaje):
+                progreso_bar.progress(actual / total)
+                texto_progreso.markdown(f"**[{actual}/{total}]** {mensaje}")
+                
+            try:
+                entrenador = train_cv.EntrenadorCrossValidation(ruta_dataset, num_folds=k_folds)
+                resultados = entrenador.entrenar_cv(
+                    modelos_a_entrenar=modelos_seleccionados,
+                    epocas=epocas_cv,
+                    batch_size=batch_size_cv,
+                    callback_progreso=reportar_progreso
+                )
+                
+                st.success("🎉 ¡Validación Cruzada completada y mejores modelos guardados con éxito!")
+                st.cache_resource.clear()
+            except Exception as e:
+                st.error(f"Error durante la validación cruzada: {str(e)}")
+                
+        # Cargar resultados si existen en disco
+        if os.path.exists('cv_metrics_results.json'):
+            with open('cv_metrics_results.json', 'r', encoding='utf-8') as f:
+                resultados_cv = json.load(f)
+                
+            st.markdown("### 📊 Comparativa de Resultados de Validación Cruzada")
+            
+            filas_tabla = []
+            for mod_name, res in resultados_cv.items():
+                filas_tabla.append({
+                    'Modelo': mod_name.upper(),
+                    'Accuracy Promedio': f"{res['accuracy_media']:.2%}",
+                    'Desviación Estándar': f"±{res['accuracy_std']:.4f}",
+                    'Tiempo Promedio Proceso': f"{res['tiempo_medio']:.2f}s",
+                    'F1-Score weighted': f"{res['reporte_final']['weighted avg']['f1-score']:.4f}"
+                })
+            df_tabla = pd.DataFrame(filas_tabla)
+            st.dataframe(df_tabla, use_container_width=True)
+            
+            # Graficar Curvas ROC Consolidadas
+            st.markdown("### 📈 Curvas ROC Consolidadas (One-vs-Rest)")
+            
+            model_options = list(resultados_cv.keys())
+            modelo_roc = st.selectbox("Seleccione el modelo para visualizar sus curvas ROC por clase:", options=model_options, format_func=lambda x: x.upper())
+            
+            fig_roc = go.Figure()
+            curvas_roc = resultados_cv[modelo_roc]['curvas_roc']
+            
+            for clase_nombre, roc_data in curvas_roc.items():
+                if roc_data['fpr']:
+                    fig_roc.add_trace(go.Scatter(
+                        x=roc_data['fpr'], y=roc_data['tpr'],
+                        mode='lines',
+                        name=f"{self.informacion_clases.get(clase_nombre, {}).get('nombre', clase_nombre)} (AUC = {roc_data['auc']:.4f})"
+                    ))
+            
+            fig_roc.add_trace(go.Scatter(
+                x=[0, 1], y=[0, 1],
+                mode='lines',
+                line=dict(dash='dash', color='gray'),
+                name='Aleatorio (AUC = 0.50)'
+            ))
+            fig_roc.update_layout(
+                title=f"Curvas ROC - {modelo_roc.upper()}",
+                xaxis_title="Falso Positivo (FPR)",
+                yaxis_title="Verdadero Positivo (TPR)",
+                height=500
+            )
+            st.plotly_chart(fig_roc, use_container_width=True)
+
+    # ========== PESTAÑA: PRUEBAS ESTADÍSTICAS ==========
+    def mostrar_tab_stats(self):
+        st.header("🔬 Validación Estadística de los Modelos")
+        st.write("Verifica la significancia del rendimiento de los modelos mediante pruebas estadísticas robustas (Friedman y Wilcoxon por fold).")
+        
+        if not os.path.exists('cv_metrics_results.json'):
+            st.warning("⚠️ No se encontraron resultados de validación cruzada. Por favor, realiza el entrenamiento en la pestaña anterior antes de correr las pruebas estadísticas.")
+            return
+            
+        if st.button("📊 Ejecutar Pruebas Estadísticas Robustas", type="primary", use_container_width=True):
+            import stats_validation
+            resultados_cv = stats_validation.cargar_resultados_cv()
+            reporte_stats = stats_validation.ejecutar_pruebas_estadisticas(resultados_cv)
+            st.session_state.reporte_stats = reporte_stats
+            
+        if 'reporte_stats' in st.session_state:
+            reporte = st.session_state.reporte_stats
+            
+            # Friedman
+            st.subheader("1. Prueba de Friedman (Comparación Global)")
+            friedman = reporte.get('anova_friedman', {})
+            if 'error' in friedman:
+                st.error(friedman['error'])
+            elif 'p_valor' in friedman:
+                st.metric("Estadístico Chi-cuadrado", f"{friedman['estadistico']:.4f}")
+                st.metric("p-valor", f"{friedman['p_valor']:.6f}")
+                if friedman['significativo']:
+                    st.success(f"✅ Significativo: {friedman['interpretacion']}")
+                else:
+                    st.info(f"ℹ️ {friedman['interpretacion']}")
+                    
+            # Wilcoxon & t-Student
+            st.subheader("2. Comparación por Pares de Modelos")
+            st.write("Compara la exactitud de los folds entre pares de modelos:")
+            
+            datos_tabla_pares = []
+            for comp in reporte.get('comparaciones_pares', []):
+                datos_tabla_pares.append({
+                    'Comparación': f"{comp['modelo1'].upper()} vs {comp['modelo2'].upper()}",
+                    'p-valor (t-Student Emparejado)': f"{comp['t_student']['p_valor']:.5f}",
+                    'p-valor (Wilcoxon)': f"{comp['wilcoxon']['p_valor']:.5f}",
+                    'Interpretación': comp['interpretacion']
+                })
+            df_pares = pd.DataFrame(datos_tabla_pares)
+            st.dataframe(df_pares, use_container_width=True)
+
+    # ========== PESTAÑA: DIAGNÓSTICO INDIVIDUAL (INFERENCIA) ==========
+    def mostrar_tab_inference(self):
+        st.header("👁️ Diagnóstico Ocular Individual")
+        st.write("Cargue una imagen del fondo del ojo o de la retina del paciente para realizar un diagnóstico con el mejor modelo entrenado guardado en formato `.h5`.")
+        
+        if not os.path.exists('best_ocular_model.h5'):
+            st.warning("⚠️ No se ha detectado el mejor modelo guardado (`best_ocular_model.h5`). Por favor, entrene los modelos en la pestaña de Cross-Validation primero.")
+            return
+            
+        archivo_subido = st.file_uploader("Cargue una imagen ocular (JPG, PNG, JPEG):", type=['png', 'jpg', 'jpeg'])
+        
+        if archivo_subido is not None:
+            imagen = Image.open(archivo_subido)
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                st.image(imagen, caption="Imagen Subida", use_column_width=True)
+                
+            with col2:
+                if st.button("🚀 Iniciar Diagnóstico Automatizado", type="primary", use_container_width=True):
+                    with st.spinner("Procesando imagen e infiriendo diagnóstico..."):
+                        # 1. Cargar metadato del mejor modelo para saber cómo procesar
+                        tipo_modelo = "neural_network"
+                        if os.path.exists('best_model_meta.json'):
+                            with open('best_model_meta.json', 'r') as f:
+                                meta = json.load(f)
+                                tipo_modelo = meta.get('tipo', 'neural_network')
+                                
+                        # 2. Cargar diccionario de clases
+                        indices_clases = {}
+                        if os.path.exists('class_indices.json'):
+                            with open('class_indices.json', 'r', encoding='utf-8') as f:
+                                indices_clases = json.load(f)
+                        else:
+                            indices_clases = {'normal': 0, 'cataract': 1, 'glaucoma': 2, 'diabetes': 3}
+                        nombres_clases_list = list(indices_clases.keys())
+                        
+                        # 3. Preprocesar imagen
+                        array_img = self.preprocesar_imagen(imagen)
+                        
+                        # 4. Inferencia
+                        t_inicio = time.time()
+                        if tipo_modelo == "cnn_rf":
+                            # Cargar modelo extractor y RF
+                            extractor = tf.keras.models.load_model('best_ocular_model.h5')
+                            feature_vector = extractor.predict(array_img, verbose=0)
+                            with open('best_rf_classifier.pkl', 'rb') as f:
+                                rf_classifier = pickle.load(f)
+                            pred_probs = rf_classifier.predict_proba(feature_vector)[0]
+                        else:
+                            # Cargar red neuronal completa
+                            modelo = tf.keras.models.load_model('best_ocular_model.h5')
+                            pred_probs = modelo.predict(array_img, verbose=0)[0]
+                            
+                        t_proceso = time.time() - t_inicio
+                        
+                        idx_pred = np.argmax(pred_probs)
+                        clase_pred = nombres_clases_list[idx_pred]
+                        confianza = pred_probs[idx_pred]
+                        
+                        # Mostrar diagnóstico
+                        info_clase = self.informacion_clases.get(clase_pred, {})
+                        nombre_español = info_clase.get('nombre', clase_pred)
+                        color_es = info_clase.get('color', '#38bdf8')
+                        
+                        st.markdown(f"### 🎯 Diagnóstico Principal: <span style='color:{color_es}'>{nombre_español}</span>", unsafe_allow_html=True)
+                        st.metric("Confianza del Diagnóstico", f"{confianza:.2%}")
+                        st.write(f"⏱️ **Tiempo de Inferencia:** {t_proceso:.4f} segundos")
+                        st.write(f"📁 **Descripción:** {info_clase.get('descripcion', 'N/A')}")
+                        st.write(f"🩺 **Tratamiento Sugerido:** {info_clase.get('tratamiento', 'N/A')}")
+                        st.write(f"📈 **Pronóstico Clínico:** {info_clase.get('pronostico', 'N/A')}")
+                        
+                        # Guardar predicciones en sesión para reporte individual
+                        st.session_state.inference_pred = {
+                            'clase_predicha': clase_pred,
+                            'confianza': confianza,
+                            'tiempo_prediccion': t_proceso,
+                            'arquitectura': 'Mejor Modelo Guardado',
+                            'tamaño_modelo': 0.0,
+                            'conteo_parametros': 0,
+                            'eficiencia': confianza / t_proceso if t_proceso > 0 else 0
+                        }
+                        st.session_state.inference_img = imagen
+                        st.session_state.inference_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # ========== PESTAÑA: REPORTES ==========
+    def mostrar_tab_reports(self):
+        st.header("📤 Generación y Exportación de Reportes")
+        st.write("Genera reportes técnicos y clínicos consolidados de los modelos evaluados y descárgalos en múltiples formatos oficiales.")
+        
+        if not os.path.exists('cv_metrics_results.json'):
+            st.warning("⚠️ No hay datos de validación cruzada disponibles. Genere los modelos antes de exportar los informes.")
+            return
+            
+        import stats_validation
+        import report_generator
+        
+        resultados_cv = stats_validation.cargar_resultados_cv()
+        pruebas_stats = stats_validation.ejecutar_pruebas_estadisticas(resultados_cv)
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.subheader("📊 Reporte en Excel")
+            st.write("Tabla comparativa de métricas, accuracies por fold y métricas detalladas por clase.")
+            if st.button("📂 Generar Excel (.xlsx)", use_container_width=True):
+                path_xls = report_generator.generar_excel_report(resultados_cv)
+                with open(path_xls, 'rb') as f:
+                    st.download_button("📥 Descargar Excel", f, file_name=path_xls, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
+                    
+        with col2:
+            st.subheader("📄 Reporte en Word")
+            st.write("Informe clínico-técnico con formato formal, tablas de rendimiento y explicaciones clínicas.")
+            if st.button("📝 Generar Word (.docx)", use_container_width=True):
+                path_docx = report_generator.generar_word_report(resultados_cv, pruebas_stats)
+                with open(path_docx, 'rb') as f:
+                    st.download_button("📥 Descargar Word", f, file_name=path_docx, mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
+                    
+        with col3:
+            st.subheader("📕 Reporte en PDF")
+            st.write("Documento oficial firmado digitalmente con diagramas de validación y resumen estadístico.")
+            if st.button("🎯 Generar PDF (.pdf)", use_container_width=True):
+                path_pdf = report_generator.generar_pdf_report(resultados_cv, pruebas_stats)
+                with open(path_pdf, 'rb') as f:
+                    st.download_button("📥 Descargar PDF", f, file_name=path_pdf, mime="application/pdf", use_container_width=True)
+
+    # ========== EJECUTAR PRINCIPAL ==========
     def ejecutar(self):
-        """Ejecuta la aplicación principal CON ANÁLISIS ESTADÍSTICO"""
-        # Inicializar session state
-        if 'language' not in st.session_state:
-            st.session_state.language = 'es'
-        if 'analisis_completado' not in st.session_state:
-            st.session_state.analisis_completado = False
-        if 'predicciones' not in st.session_state:
-            st.session_state.predicciones = None
-        if 'imagen_analisis' not in st.session_state:
-            st.session_state.imagen_analisis = None
-        if 'marca_tiempo_analisis' not in st.session_state:
-            st.session_state.marca_tiempo_analisis = None
-        if 'resultados_estadisticos' not in st.session_state:
-            st.session_state.resultados_estadisticos = None
+        """Ejecuta la interfaz de Streamlit integrada secuencialmente"""
+        # Inicializar variables de estado
+        if 'autenticado' not in st.session_state:
+            st.session_state.autenticado = False
+            
+        # Si no está autenticado, forzar el login
+        if not st.session_state.autenticado:
+            self.mostrar_login()
+            return
+            
+        # Barra lateral (Sidebar) con cierre de sesión
+        st.sidebar.markdown("<h2 style='text-align: center; color: #38bdf8;'>🏥 MENU CLÍNICO</h2>", unsafe_allow_html=True)
         
-        # Header
-        self.mostrar_encabezado()
-        
-        # Sidebar
-        st.sidebar.markdown(f"## {get_text('sidebar_title', st.session_state.language)}")
-        
+        # Selección de idioma
         idiomas = get_available_languages()
-        idx_idioma = list(idiomas.keys()).index(st.session_state.language) if st.session_state.language in idiomas else 0
-        
         idioma_seleccionado = st.sidebar.selectbox(
-            get_text('select_language', st.session_state.language),
+            "Idioma / Language",
             options=list(idiomas.keys()),
             format_func=lambda x: idiomas[x],
-            index=idx_idioma
+            index=list(idiomas.keys()).index(st.session_state.language) if st.session_state.language in idiomas else 0
         )
-        
         if idioma_seleccionado != st.session_state.language:
             st.session_state.language = idioma_seleccionado
             st.experimental_rerun()
             
         st.sidebar.markdown("---")
         
-        # Cargar modelos
-        if self.modelos is None:
-            with st.spinner(get_text('loading_models', st.session_state.language, "🔄 Cargando las 3 arquitecturas...")):
-                self.modelos, self.nombres_clases, self.nombres_clases_individuales = self.cargar_modelos()
-        
-        # Pestañas principales
-        tab1, tab2, tab3 = st.tabs([
-            get_text('tab_individual', st.session_state.language, "🔬 Análisis Individual"), 
-            get_text('tab_statistical', st.session_state.language, "📊 Evaluación Estadística"), 
-            get_text('tab_training', st.session_state.language, "⚙️ Entrenamiento")
-        ])
-        
-        with tab3:
-            st.header(get_text('real_models_training_header', st.session_state.language, "⚙️ Entrenamiento de Modelos Reales"))
-            st.write(get_text('real_models_training_desc', st.session_state.language, "Entrena los modelos directamente sobre la carpeta `Dataset` con GPU."))
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.subheader(get_text('cnn_original_subheader', st.session_state.language, "1. CNN Original"))
-                st.write(get_text('cnn_original_desc', st.session_state.language, "Entrena el modelo base (eye_disease_model)."))
-                if st.button(get_text('train_cnn_button', st.session_state.language, "🚀 Entrenar CNN Original"), type="primary"):
-                    st.info(get_text('ui_entrenando_cnn_original', st.session_state.language, "Entrenando CNN Original..."))
-                    log_container = st.empty()
-                    try:
-                        custom_env = os.environ.copy()
-                        custom_env["PYTHONIOENCODING"] = "utf-8"
-                        custom_env["PYTHONUNBUFFERED"] = "1"
-                        
-                        process = subprocess.Popen(
-                            [sys.executable, 'train_model.py'], 
-                            stdout=subprocess.PIPE, 
-                            stderr=subprocess.STDOUT,
-                            text=True,
-                            encoding='utf-8',
-                            bufsize=1,
-                            env=custom_env
-                        )
-                        log_text = ""
-                        for line in iter(process.stdout.readline, ''):
-                            log_text += line
-                            lineas_cortadas = "\n".join(log_text.split("\n")[-30:])
-                            log_container.code(lineas_cortadas)
-                        process.wait()
-                        if process.returncode == 0:
-                            st.cache_resource.clear()
-                            st.success(get_text('cnn_saved_success', st.session_state.language, "✅ Modelo CNN Original guardado. ¡Refresca la página para usarlo!"))
-                        else:
-                            st.error(get_text('cnn_error', st.session_state.language, f"❌ Error (Código {process.returncode})"))
-                    except Exception as e:
-                        st.error(f"Error lanzando proceso: {e}")
-                    
-                if os.path.exists('medical_training_results.png'):
-                    st.image('medical_training_results.png', caption=get_text('cnn_training_metrics', st.session_state.language, "Métricas de Entrenamiento - CNN Original"), use_column_width=True)
-                elif os.path.exists('training_results.png'):
-                    st.image('training_results.png', caption=get_text('cnn_training_metrics', st.session_state.language, "Métricas de Entrenamiento - CNN Original"), use_column_width=True)
-                        
-            with col2:
-                st.subheader(get_text('ensemble_subheader', st.session_state.language, "2. Ensemble (EfficientNet + ResNet)"))
-                st.write(get_text('ensemble_desc', st.session_state.language, "Entrena los dos modelos pesados. Requiere el modelo base primero."))
-                if st.button(get_text('train_ensemble_button', st.session_state.language, "🚀 Entrenar Ensemble"), type="primary"):
-                    st.info(get_text('ui_entrenando_ensemble_esto_tomar', st.session_state.language, "Entrenando Ensemble (Esto tomará bastante tiempo)..."))
-                    log_container = st.empty()
-                    try:
-                        custom_env = os.environ.copy()
-                        custom_env["PYTHONIOENCODING"] = "utf-8"
-                        custom_env["PYTHONUNBUFFERED"] = "1"
-                        
-                        process_ens = subprocess.Popen(
-                            [sys.executable, 'train_ensemble.py'], 
-                            stdout=subprocess.PIPE, 
-                            stderr=subprocess.STDOUT,
-                            text=True,
-                            encoding='utf-8',
-                            bufsize=1,
-                            env=custom_env
-                        )
-                        log_text_ens = ""
-                        for line in iter(process_ens.stdout.readline, ''):
-                            log_text_ens += line
-                            lineas_cortadas = "\n".join(log_text_ens.split("\n")[-30:])
-                            log_container.code(lineas_cortadas)
-                        process_ens.wait()
-                        if process_ens.returncode == 0:
-                            st.cache_resource.clear()
-                            st.success(get_text('ensemble_saved_success', st.session_state.language, "🎉 ¡Modelos de Ensemble guardados! Refresca la página."))
-                        else:
-                            st.error(get_text('ensemble_error', st.session_state.language, f"❌ Error en el entrenamiento del Ensemble (Código {process_ens.returncode})"))
-                    except Exception as e:
-                        st.error(get_text('ensemble_launch_error', st.session_state.language, f"❌ Ocurrió un error al lanzar el proceso: {e}"))
-                
-                if os.path.exists('ensemble_medical_results.png'):
-                    st.image('ensemble_medical_results.png', caption=get_text('ensemble_training_metrics', st.session_state.language, "Métricas de Entrenamiento - Ensemble"), use_column_width=True)
-
-        if len(self.modelos) < 3:
-            st.warning(get_text('missing_models_warning', st.session_state.language, "⚠️ Faltan algunos modelos. Ve a la pestaña '⚙️ Entrenamiento' para generarlos."))
-
-            
-        # Info en sidebar
-        st.sidebar.success(get_text('architectures_loaded', st.session_state.language, f"✅ {len(self.modelos)} arquitecturas cargadas").replace("{len}", str(len(self.modelos))))
-        
-        if st.sidebar.button(get_text('clear_cache_button', st.session_state.language, "🧹 Limpiar Caché y Recargar Modelos")):
-            st.cache_resource.clear()
+        if st.sidebar.button("🔒 Cerrar Sesión", use_container_width=True):
+            st.session_state.autenticado = False
             st.experimental_rerun()
             
-        with tab1:
-            # Botón para limpiar análisis
-            if st.sidebar.button(get_text('new_analysis', st.session_state.language, "🔄 Nuevo Análisis"), help=get_text('new_analysis_help', st.session_state.language, "Limpia el análisis actual")):
-                st.session_state.analisis_completado = False
-                st.session_state.predicciones = None
-                st.session_state.imagen_analisis = None
-                st.session_state.marca_tiempo_analisis = None
-                st.experimental_rerun()
-            
-            # Mostrar características
-            self.mostrar_vitrina_arquitecturas()
-            
-            st.markdown("---")
-            
-            # Si ya hay un análisis completo, mostrar resultados
-            if st.session_state.analisis_completado and st.session_state.predicciones:
-                st.success(get_text('analysis_completed', st.session_state.language, "🎉 **Análisis ya completado!** Puedes descargar los reportes o hacer un nuevo análisis."))
-                
-                # Mostrar imagen analizada
-                if st.session_state.imagen_analisis:
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        st.image(st.session_state.imagen_analisis, caption=get_text('analyzed_image', st.session_state.language, "Imagen analizada"), use_column_width=True)
-                
-                # Mostrar todos los resultados usando el estado guardado
-                predicciones = st.session_state.predicciones
-                
-                self.mostrar_resultados_prediccion(predicciones)
-                st.markdown("---")
-                self.mostrar_comparacion_rendimiento(predicciones)
-                st.markdown("---")
-                self.mostrar_comparacion_radar(predicciones)
-                
-                mejores_modelos = self.encontrar_mejor_arquitectura(predicciones)
-                st.markdown("---")
-                self.mostrar_podio_ganadores(mejores_modelos)
-                st.markdown("---")
-                self.mostrar_analisis_detallado(predicciones, mejores_modelos)
-                
-                # SECCIÓN DE REPORTES AVANZADOS
-                self.mostrar_seccion_reportes_avanzados(predicciones, st.session_state.imagen_analisis, st.session_state.marca_tiempo_analisis)
-                
-                # Tabla resumen
-                with st.expander(get_text('summary_table', st.session_state.language, "📊 Tabla Resumen de Métricas")):
-                    df_resumen = pd.DataFrame([
-                        {
-                            get_text('architecture', st.session_state.language, 'Arquitectura'): pred['arquitectura'].replace('_', ' '),
-                            get_text('diagnosis_en', st.session_state.language, 'Diagnóstico'): pred['clase_predicha'],
-                            get_text('diagnosis_es', st.session_state.language, 'Diagnóstico_ES'): self.informacion_clases.get(pred['clase_predicha'], {}).get('nombre', pred['clase_predicha']),
-                            get_text('confidence_table', st.session_state.language, 'Confianza'): f"{pred['confianza']:.1%}",
-                            get_text('time_table', st.session_state.language, 'Tiempo'): f"{pred['tiempo_prediccion']:.3f}s",
-                            get_text('size_table', st.session_state.language, 'Tamaño'): f"{pred['tamaño_modelo']:.1f}MB",
-                            get_text('parameters_table', st.session_state.language, get_text('parameters_count', st.session_state.language, 'Parámetros')): f"{pred['conteo_parametros']:,}",
-                            get_text('efficiency_table', st.session_state.language, 'Eficiencia'): f"{pred.get('eficiencia', 0):.1f}",
-                            get_text('general_score_table', st.session_state.language, 'Score General'): f"{pred.get('score_general', 0):.3f}",
-                            get_text('severity', st.session_state.language, 'Gravedad'): self.informacion_clases.get(pred['clase_predicha'], {}).get('gravedad', get_text('unspecified', st.session_state.language, 'No especificada'))
-                        }
-                        for pred in predicciones
-                    ])
-                    st.dataframe(df_resumen, use_container_width=True)
-                
-                # Timestamp
-                st.markdown("---")
-                st.markdown(f"📅 Análisis realizado: {st.session_state.marca_tiempo_analisis}")
-                
-            else:
-                # Interfaz para nuevo análisis
-                st.markdown(f"## {get_text('upload_title', st.session_state.language)}")
-                archivo_subido = st.file_uploader(
-                    get_text('upload_help', st.session_state.language),
-                    type=['png', 'jpg', 'jpeg'],
-                    help=get_text('upload_description', st.session_state.language, "La imagen será analizada por las 3 arquitecturas simultáneamente")
-                )
-                
-                if archivo_subido is not None:
-                    # Mostrar imagen
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        imagen = Image.open(archivo_subido)
-                        st.image(imagen, caption=get_text('image_caption', st.session_state.language, "Imagen para la batalla"), use_column_width=True)
-                    
-                    # Botón de análisis
-                    if st.button(get_text('battle_button', st.session_state.language, "🚀 INICIAR BATALLA DE ARQUITECTURAS"), type="primary", use_container_width=True):
-                        
-                        marca_tiempo_analisis = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                        
-                        # Preprocesamiento y predicciones
-                        with st.spinner(get_text('processing_image', st.session_state.language, "🔄 Procesando imagen para todas las arquitecturas...")):
-                            array_img = self.preprocesar_imagen(imagen)
-                        
-                        if array_img is not None:
-                            predicciones = []
-                            
-                            with st.spinner(get_text('analyzing_architectures', st.session_state.language, "🏗️ Analizando con las 3 arquitecturas...")):
-                                barra_progreso = st.progress(0)
-                                
-                                for i, (nombre_arq, modelo) in enumerate(self.modelos.items()):
-                                    pred = self.predecir_con_cronometraje(modelo, array_img, nombre_arq)
-                                    if pred:
-                                        predicciones.append(pred)
-                                    barra_progreso.progress((i + 1) / len(self.modelos))
-                            
-                            if len(predicciones) >= 2:
-                                st.success(get_text('battle_completed', st.session_state.language, "✅ ¡Batalla completada! Analizando resultados..."))
-                                
-                                # Calcular scores adicionales
-                                for pred in predicciones:
-                                    max_conf = max(p['confianza'] for p in predicciones)
-                                    min_tiempo = min(p['tiempo_prediccion'] for p in predicciones)
-                                    min_tamaño = min(p['tamaño_modelo'] for p in predicciones)
-                                    
-                                    score_conf = pred['confianza'] / max_conf
-                                    score_velocidad = min_tiempo / pred['tiempo_prediccion']
-                                    score_memoria = min_tamaño / pred['tamaño_modelo']
-                                    
-                                    pred['score_general'] = 0.5 * score_conf + 0.25 * score_velocidad + 0.25 * score_memoria
-                                    pred['eficiencia'] = pred['confianza'] / pred['tiempo_prediccion']
-                                
-                                # GUARDAR EN SESSION STATE
-                                st.session_state.predicciones = predicciones
-                                st.session_state.imagen_analisis = imagen
-                                st.session_state.marca_tiempo_analisis = marca_tiempo_analisis
-                                st.session_state.analisis_completado = True
-                                
-                                # Forzar rerun para mostrar resultados
-                                st.experimental_rerun()
-                            
-                            else:
-                                st.error(get_text('prediction_error', st.session_state.language, "❌ Error en las predicciones"))
+        # Título principal del dashboard
+        self.mostrar_encabezado()
         
-        with tab2:
-            # NUEVA PESTAÑA: ANÁLISIS ESTADÍSTICO
-            self.mostrar_seccion_analisis_estadistico()
+        # Estructura secuencial en Pestañas (Tabs)
+        tab_eda, tab_tuning, tab_cv, tab_stats, tab_inference, tab_reports = st.tabs([
+            "📊 1. EDA y Limpieza",
+            "⚙️ 2. Ajuste Hiperparámetros",
+            "🔄 3. Entrenamiento & CV",
+            "🔬 4. Pruebas Estadísticas",
+            "👁️ 5. Diagnóstico Individual",
+            "📤 6. Reportes y Descargas"
+        ])
         
-
-        
-        # Footer técnico (expandido)
-        st.markdown("---")
-        footer_key = 'system_footer_full'
-        footer_text = get_text(footer_key, st.session_state.language, None)
-        
-        if footer_text and footer_text != f"[{footer_key}]":
-            st.markdown(footer_text)
-        else:
-            # Fallback in Spanish if translation missing
-            st.markdown(f"""
-            ### {get_text('system_title', st.session_state.language, get_text('system_title', st.session_state.language, '⚙️ Sobre Este Sistema Avanzado con Análisis Estadístico'))}
+        with tab_eda:
+            self.mostrar_tab_eda()
             
-            **{get_text('system_subtitle', st.session_state.language, get_text('system_subtitle', st.session_state.language, '🚀 Sistema de Diagnóstico Ocular de Nueva Generación'))}**
+        with tab_tuning:
+            self.mostrar_tab_tuning()
             
-            **🔬 Nuevas Funcionalidades Estadísticas:**
-            - **📊 Coeficiente de Matthews (MCC)**: Métrica balanceada para clases desbalanceadas
-            - **🔬 Prueba de McNemar**: Comparación estadística rigurosa entre modelos
-            - **📈 Intervalos de Confianza Bootstrap**: Robustez estadística (95% CI)
-            - **🎭 Matrices de Confusión**: Análisis detallado por clase
-            - **📋 Reportes Estadísticos**: Exportación completa de resultados
+        with tab_cv:
+            self.mostrar_tab_cv()
             
-            **🔬 Ventajas Competitivas:**
-            - **10 enfermedades especializadas** vs 4 básicas de sistemas convencionales
-            - **Análisis multi-arquitectura** con comparación simultánea de CNNs
-            - **Evaluación estadística rigurosa** con pruebas de significancia
-            - **Reportes profesionales PDF** con análisis clínico y estadístico
-            - **Exportación técnica completa** (JSON, CSV, TXT) para investigación
-            - **Recomendaciones contextuales** basadas en evidencia estadística
+        with tab_stats:
+            self.mostrar_tab_stats()
             
-            **🏗️ Arquitecturas Implementadas:**
-            - **🧠 CNN Híbrida (MobileNetV2)**: Transfer Learning especializado
-            - **⚡ EfficientNet-B0**: Compound Scaling balanceado
-            - **🔗 ResNet-50 V2**: Conexiones residuales profundas
+        with tab_inference:
+            self.mostrar_tab_inference()
             
-            **📊 Métricas Evaluadas:**
-            - 🎯 **Precisión**: Confianza, MCC y consenso diagnóstico
-            - ⚡ **Velocidad**: Tiempo de inferencia optimizado
-            - 💾 **Eficiencia**: Uso de memoria y escalabilidad
-            - 🏆 **Balance**: Score general multi-criterio
-            - 📈 **Significancia**: Pruebas estadísticas inferenciales
-            
-            **🎯 Aplicaciones:**
-            - 🏥 **Clínicas**: Diagnóstico de alta precisión con validación estadística
-            - 📱 **Móviles**: Apps de telemedicina con métricas robustas
-            - 🔄 **Producción**: Sistemas hospitalarios escalables con evidencia estadística
-            - 🔬 **Investigación**: Datos completos para publicaciones científicas
-            
-            **💡 Innovación**: Primer sistema que combina múltiples arquitecturas CNN con 
-            análisis estadístico inferencial completo para diagnóstico ocular especializado.
-            
-            **📚 Métodos Estadísticos:**
-            - **MCC**: Coeficiente de Correlación de Matthews para métricas balanceadas
-            - **McNemar**: Prueba chi-cuadrado para comparación de clasificadores
-            - **Bootstrap**: Intervalos de confianza no paramétricos
-            - **Corrección de Yates**: Para muestras pequeñas en McNemar
-            """)
+        with tab_reports:
+            self.mostrar_tab_reports()
 
 # Ejecutar aplicación
 if __name__ == "__main__":
