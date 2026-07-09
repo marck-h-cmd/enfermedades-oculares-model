@@ -2107,38 +2107,33 @@ Arquitecturas evaluadas:
             if dist_clases:
                 # Traducir las clases al español en el gráfico
                 nombres_traducidos = [self.informacion_clases.get(c, {}).get('nombre', c) for c in dist_clases.keys()]
-                fig_dist = go.Figure(data=[
-                    go.Bar(x=nombres_traducidos, y=list(dist_clases.values()), marker_color='#38bdf8')
-                ])
-                fig_dist.update_layout(
-                    title="Distribución de Imágenes por Clase",
-                    xaxis_title="Patología Ocular",
-                    yaxis_title="Cantidad de Imágenes",
-                    height=450
-                )
-                st.plotly_chart(fig_dist, use_container_width=True)
+                df_dist = pd.DataFrame({
+                    'Patología Ocular': nombres_traducidos,
+                    'Cantidad de Imágenes': list(dist_clases.values())
+                }).set_index('Patología Ocular')
+                st.bar_chart(df_dist)
                 
                 # Estadísticas de Dimensiones y Archivos
                 st.markdown("### 📏 Propiedades de las Imágenes Médicas")
                 col_d, col_e = st.columns(2)
                 with col_d:
-                    fig_width = px.histogram(
-                        x=df_clean['Ancho'].tolist(),
-                        title='Distribución del Ancho de Imágenes (píxeles)',
-                        labels={'x': 'Ancho'},
-                        color_discrete_sequence=['#f59e0b']
-                    )
-                    fig_width.update_layout(xaxis_title="Ancho", yaxis_title="Cantidad")
-                    st.plotly_chart(fig_width, use_container_width=True)
+                    # Conteo de resoluciones
+                    df_resoluciones = pd.DataFrame({
+                        'Ancho (píxeles)': [f"{a} px" for a in df_clean['Ancho'].tolist()]
+                    })
+                    conteo_resoluciones = df_resoluciones['Ancho (píxeles)'].value_counts()
+                    st.write("**Distribución del Ancho de Imágenes**")
+                    st.bar_chart(conteo_resoluciones)
                 with col_e:
-                    fig_size = px.histogram(
-                        x=df_clean['TamanoKB'].tolist(),
-                        title='Distribución del Tamaño de Archivo (KB)',
-                        labels={'x': 'Tamaño (KB)'},
-                        color_discrete_sequence=['#10b981']
-                    )
-                    fig_size.update_layout(xaxis_title="Tamaño (KB)", yaxis_title="Cantidad")
-                    st.plotly_chart(fig_size, use_container_width=True)
+                    # Calcular el histograma en Python usando numpy
+                    counts, bins = np.histogram(df_clean['TamanoKB'].tolist(), bins=15)
+                    bin_labels = [f"{bins[i]:.0f}-{bins[i+1]:.0f} KB" for i in range(len(counts))]
+                    df_hist_size = pd.DataFrame({
+                        'Tamaño de Archivo': bin_labels,
+                        'Cantidad': counts
+                    }).set_index('Tamaño de Archivo')
+                    st.write("**Distribución del Tamaño de Archivo**")
+                    st.bar_chart(df_hist_size)
 
     # ========== PESTAÑA: AJUSTE DE HIPERPARÁMETROS (TUNING) ==========
     def mostrar_tab_tuning(self):
