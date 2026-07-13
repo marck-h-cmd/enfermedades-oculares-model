@@ -279,9 +279,9 @@ class EntrenadorCrossValidation:
                     
                     resultados_globales[modelo_name]['accuracies'].append(acc_val)
                     resultados_globales[modelo_name]['tiempos_entrenamiento'].append(t_proceso)
-                    resultados_globales[modelo_name]['true_labels'].extend(y_v.tolist())
-                    resultados_globales[modelo_name]['pred_labels'].extend(y_p.tolist())
-                    resultados_globales[modelo_name]['pred_probabilities'].extend(y_prob.tolist())
+                    resultados_globales[modelo_name]['true_labels'].extend(y_v.tolist() if hasattr(y_v, 'tolist') else list(y_v))
+                    resultados_globales[modelo_name]['pred_labels'].extend(y_p.tolist() if hasattr(y_p, 'tolist') else list(y_p))
+                    resultados_globales[modelo_name]['pred_probabilities'].extend(y_prob.tolist() if hasattr(y_prob, 'tolist') else list(y_prob))
                     
                     # Si es el mejor híbrido RF, guardamos el extractor en .h5 y el RF en .pkl
                     if acc_val > mejor_acc_global:
@@ -296,7 +296,7 @@ class EntrenadorCrossValidation:
                 else:
                     # Modelos Keras (Clásicos y Fusión Híbrida)
                     if modelo_name == 'mobilenet':
-                        modelo = self.crear_modelo_classic_or_fusion = self.crear_modelo_clasico('mobilenet', num_clases)
+                        modelo = self.crear_modelo_clasico('mobilenet', num_clases)
                     elif modelo_name == 'resnet':
                         modelo = self.crear_modelo_clasico('resnet', num_clases)
                     elif modelo_name == 'efficientnet':
@@ -331,9 +331,9 @@ class EntrenadorCrossValidation:
                     
                     resultados_globales[modelo_name]['accuracies'].append(acc_val)
                     resultados_globales[modelo_name]['tiempos_entrenamiento'].append(t_proceso)
-                    resultados_globales[modelo_name]['true_labels'].extend(y_val_verdadero.tolist())
-                    resultados_globales[modelo_name]['pred_labels'].extend(pred_labels.tolist())
-                    resultados_globales[modelo_name]['pred_probabilities'].extend(pred_prob.tolist())
+                    resultados_globales[modelo_name]['true_labels'].extend(y_val_verdadero.tolist() if hasattr(y_val_verdadero, 'tolist') else list(y_val_verdadero))
+                    resultados_globales[modelo_name]['pred_labels'].extend(pred_labels.tolist() if hasattr(pred_labels, 'tolist') else list(pred_labels))
+                    resultados_globales[modelo_name]['pred_probabilities'].extend(pred_prob.tolist() if hasattr(pred_prob, 'tolist') else list(pred_prob))
                     
                     # Guardar el mejor modelo de tipo red neuronal
                     if acc_val > mejor_acc_global:
@@ -393,7 +393,7 @@ class EntrenadorCrossValidation:
                 'accuracy_media': float(np.mean(res['accuracies'])),
                 'accuracy_std': float(np.std(res['accuracies'])),
                 'tiempos_folds': [float(t) for t in res['tiempos_entrenamiento']],
-                'tiempo_medio': float(np.mean(res['tiempos_folds'])),
+                'tiempo_medio': float(np.mean(res['tiempos_entrenamiento'])),
                 'reporte_final': reporte,
                 'matriz_confusion': cm,
                 'curvas_roc': curvas_roc_clases

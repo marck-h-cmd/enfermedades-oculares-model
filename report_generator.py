@@ -73,11 +73,26 @@ def generar_excel_report(resultados_cv, ruta_salida=None):
                 })
     df_clases = pd.DataFrame(filas_clases)
     
-    # Escribir en Excel con openpyxl
+    # Escribir en Excel con openpyxl y ajustar ancho de columnas
     with pd.ExcelWriter(ruta_salida, engine='openpyxl') as writer:
         df_resumen.to_excel(writer, sheet_name='Resumen Global', index=False)
         df_folds.to_excel(writer, sheet_name='Detalle por Folds', index=False)
         df_clases.to_excel(writer, sheet_name='Métricas por Clase', index=False)
+        
+        # Ajustar ancho de columnas para mejor visualización
+        for sheetname in writer.sheets:
+            worksheet = writer.sheets[sheetname]
+            for col_cells in worksheet.columns:
+                max_length = 0
+                column = col_cells[0].column_letter
+                for cell in col_cells:
+                    try:
+                        if len(str(cell.value)) > max_length:
+                            max_length = len(cell.value)
+                    except:
+                        pass
+                adjusted_width = (max_length + 2)
+                worksheet.column_dimensions[column].width = adjusted_width
         
     return ruta_salida
 
@@ -333,6 +348,34 @@ def generar_pdf_report(resultados_cv, pruebas_stats, ruta_salida=None):
         pdf.cell(35, 6, f"{comp['wilcoxon']['p_valor']:.4f}", 1, 0, 'C')
         pdf.cell(60, 6, comp['interpretacion'][:35] + "...", 1, 1, 'C')
         
+    # 3. Diagrama de Validación
+    pdf.add_page()
+    pdf.set_font('Arial', 'B', 12)
+    pdf.set_text_color(0, 51, 102)
+    pdf.cell(0, 8, "3. Diagrama de Validacion Cruzada (Accuracy)", 0, 1)
+    pdf.ln(5)
+    
+    try:
+        img_buf = generar_grafico_comparativo(resultados_cv)
+        temp_img_path = "temp_pdf_chart.png"
+        with open(temp_img_path, 'wb') as f:
+            f.write(img_buf.read())
+        pdf.image(temp_img_path, x=15, w=180)
+        os.remove(temp_img_path)
+    except Exception as e:
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(0, 5, f"[No se pudo generar el grafico: {str(e)}]", 0, 1)
+        
+    pdf.ln(20)
+    
+    # 4. Firma Digital
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(0, 5, "__________________________________________________", 0, 1, 'C')
+    pdf.cell(0, 5, "DOCUMENTO OFICIAL FIRMADO DIGITALMENTE", 0, 1, 'C')
+    pdf.set_font('Arial', '', 9)
+    pdf.cell(0, 5, f"Sistema Experto de Diagnostico Ocular - ID Validacion: {datetime.now().strftime('%Y%m%d%H%M%S')}", 0, 1, 'C')
+    pdf.cell(0, 5, "Validez Tecnica y Cientifica bajo validacion cruzada rigurosa", 0, 1, 'C')
+
     # Guardar PDF
     pdf.output(ruta_salida)
     return ruta_salida

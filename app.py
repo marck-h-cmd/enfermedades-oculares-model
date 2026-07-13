@@ -15,6 +15,7 @@ from datetime import datetime
 import warnings
 import base64
 import json
+import pickle
 from io import BytesIO
 import matplotlib.pyplot as plt
 import seaborn as sns
