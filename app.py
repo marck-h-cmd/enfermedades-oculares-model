@@ -2295,8 +2295,18 @@ Arquitecturas evaluadas:
     # ========== PESTAÑA: PRUEBAS ESTADÍSTICAS ==========
     def mostrar_tab_stats(self):
         st.header("🔬 Validación Estadística de los Modelos")
-        st.write("Verifica la significancia del rendimiento de los modelos mediante pruebas estadísticas robustas (Friedman y Wilcoxon por fold).")
+        st.write("Verifica la significancia del rendimiento de los modelos mediante pruebas estadísticas robustas (Friedman, Shapiro-Wilk, comparaciones múltiples de Holm-Bonferroni y tamaño del efecto de Cohen).")
         
+        # Explicación educativa de la metodología robusta
+        with st.expander("📚 ¿Por qué es necesaria esta validación estadística robusta?"):
+            st.markdown("""
+            Para validar científicamente los modelos de Deep Learning, no basta con comparar los promedios globales de exactitud. Se requiere:
+            
+            1. **Prueba de Normalidad (Shapiro-Wilk)**: Evalúa si las diferencias de exactitud entre pliegues se distribuyen de forma normal ($p \\ge 0.05$). Esto determina si el método paramétrico (*t-Student*) es válido o si debemos confiar en el método no paramétrico (*Wilcoxon*).
+            2. **Corrección de Holm-Bonferroni**: Cuando hacemos múltiples comparaciones por pares (10 combinaciones con 5 modelos), la probabilidad de cometer un error de Tipo I (falso positivo) se multiplica. La corrección de Holm ajusta los $p$-valores secuencialmente para controlar este riesgo de forma rigurosa.
+            3. **Tamaño del Efecto ($d$ de Cohen)**: Cuantifica la magnitud práctica del cambio. Un efecto $|d| \\ge 0.8$ se considera **Grande** (una mejora muy marcada), mientras que $|d| < 0.2$ es **Despreciable**.
+            """)
+            
         if not os.path.exists('cv_metrics_results.json'):
             st.warning("⚠️ No se encontraron resultados de validación cruzada. Por favor, realiza el entrenamiento en la pestaña anterior antes de correr las pruebas estadísticas.")
             return
@@ -2316,27 +2326,56 @@ Arquitecturas evaluadas:
             if 'error' in friedman:
                 st.error(friedman['error'])
             elif 'p_valor' in friedman:
-                st.metric("Estadístico Chi-cuadrado", f"{friedman['estadistico']:.4f}")
-                st.metric("p-valor", f"{friedman['p_valor']:.6f}")
+                col_f1, col_f2, col_f3 = st.columns(3)
+                with col_f1:
+                    st.metric("Estadístico Chi-cuadrado", f"{friedman['estadistico']:.4f}")
+                with col_f2:
+                    st.metric("p-valor (Friedman)", f"{friedman['p_valor']:.6f}")
+                with col_f3:
+                    st.metric("Resultado Global", "Significativo" if friedman['significativo'] else "No Significativo")
+                
                 if friedman['significativo']:
-                    st.success(f"✅ Significativo: {friedman['interpretacion']}")
+                    st.success(f"✅ **Diferencia Global Detectada**: {friedman['interpretacion']}")
                 else:
-                    st.info(f"ℹ️ {friedman['interpretacion']}")
+                    st.info(f"ℹ️ **Sin Diferencias Globales**: {friedman['interpretacion']}")
                     
-            # Wilcoxon & t-Student
-            st.subheader("2. Comparación por Pares de Modelos")
+            # Wilcoxon & t-Student por pares con Shapiro-Wilk y Holm-Bonferroni
+            st.subheader("2. Comparación Detallada por Pares de Modelos")
             st.write("Compara la exactitud de los folds entre pares de modelos:")
             
             datos_tabla_pares = []
             for comp in reporte.get('comparaciones_pares', []):
+                # Determinar distribución de Shapiro-Wilk
+                normal_txt = "Normal 🟢" if comp['shapiro']['normal'] else "No Normal 🟡"
+                
+                # Tamaño de efecto formateado
+                efecto_txt = f"{comp['cohens_d']['valor']:.2f} ({comp['cohens_d']['interpretacion']})"
+                
                 datos_tabla_pares.append({
                     'Comparación': f"{comp['modelo1'].upper()} vs {comp['modelo2'].upper()}",
-                    'p-valor (t-Student Emparejado)': f"{comp['t_student']['p_valor']:.5f}",
-                    'p-valor (Wilcoxon)': f"{comp['wilcoxon']['p_valor']:.5f}",
+                    'Shapiro-Wilk p-val': f"{comp['shapiro']['p_valor']:.4f}",
+                    'Distribución': normal_txt,
+                    't-Student p-val (Orig)': f"{comp['t_student']['p_valor_original']:.4f}",
+                    't-Student p-val (Holm)': f"{comp['t_student']['p_valor_corregido']:.4f}",
+                    'Wilcoxon p-val (Orig)': f"{comp['wilcoxon']['p_valor_original']:.4f}",
+                    'Wilcoxon p-val (Holm)': f"{comp['wilcoxon']['p_valor_corregido']:.4f}",
+                    'd de Cohen (Efecto)': efecto_txt,
                     'Interpretación': comp['interpretacion']
                 })
             df_pares = pd.DataFrame(datos_tabla_pares)
             st.dataframe(df_pares, use_container_width=True)
+            
+            # Tabla de resumen de significancia final
+            st.markdown("### 🏆 Conclusiones del Consenso Estadístico")
+            for comp in reporte.get('comparaciones_pares', []):
+                normal = comp['shapiro']['normal']
+                p_val = comp['t_student']['p_valor_corregido'] if normal else comp['wilcoxon']['p_valor_corregido']
+                es_sig = p_val < 0.05
+                
+                if es_sig:
+                    st.write(f"- 🟢 **{comp['modelo1'].upper()} vs {comp['modelo2'].upper()}**: Diferencia **significativa** ($p = {p_val:.4f}$, $d = {comp['cohens_d']['valor']:.2f}$).")
+                else:
+                    st.write(f"- ⚪ **{comp['modelo1'].upper()} vs {comp['modelo2'].upper()}**: Diferencia **no significativa** ($p = {p_val:.4f}$).")
 
     # ========== PESTAÑA: DIAGNÓSTICO INDIVIDUAL (INFERENCIA) ==========
     def mostrar_tab_inference(self):

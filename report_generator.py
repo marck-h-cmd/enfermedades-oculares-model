@@ -108,7 +108,7 @@ def generar_grafico_comparativo(resultados_cv):
             
     df_plot = pd.DataFrame(datos_plot)
     
-    sns.boxplot(x='Modelo', y='Accuracy', data=df_plot, palette='Set2')
+    sns.boxplot(x='Modelo', y='Accuracy', data=df_plot, hue='Modelo', legend=False, palette='Set2')
     sns.stripplot(x='Modelo', y='Accuracy', data=df_plot, color='black', alpha=0.5, size=6)
     
     plt.title('Comparación de Modelos: Accuracy a lo largo de los Folds', fontsize=14, weight='bold')
@@ -219,21 +219,40 @@ def generar_word_report(resultados_cv, pruebas_stats, ruta_salida=None):
         )
     
     # Comparación por pares
-    doc.add_paragraph("Detalle de comparaciones estadísticas por pares (t-Student y Wilcoxon):")
-    tabla_stats = doc.add_table(rows=1, cols=4)
+    doc.add_paragraph("Detalle de comparaciones estadísticas por pares con normalidad y corrección de Holm-Bonferroni:")
+    tabla_stats = doc.add_table(rows=1, cols=6)
     tabla_stats.style = 'Light Shading Accent 1'
     hdr_cells_s = tabla_stats.rows[0].cells
     hdr_cells_s[0].text = 'Comparación'
-    hdr_cells_s[1].text = 'p-valor (t-Student)'
-    hdr_cells_s[2].text = 'p-valor (Wilcoxon)'
-    hdr_cells_s[3].text = 'Interpretación'
+    hdr_cells_s[1].text = 'Normalidad (Shapiro-Wilk p-val)'
+    hdr_cells_s[2].text = 't-Student p-val (Orig / Holm)'
+    hdr_cells_s[3].text = 'Wilcoxon p-val (Orig / Holm)'
+    hdr_cells_s[4].text = 'd de Cohen'
+    hdr_cells_s[5].text = 'Interpretación'
     
     for comp in pruebas_stats.get('comparaciones_pares', []):
         row_cells = tabla_stats.add_row().cells
         row_cells[0].text = f"{comp['modelo1'].upper()} vs {comp['modelo2'].upper()}"
-        row_cells[1].text = f"{comp['t_student']['p_valor']:.4f}"
-        row_cells[2].text = f"{comp['wilcoxon']['p_valor']:.4f}"
-        row_cells[3].text = comp['interpretacion']
+        
+        # Shapiro-Wilk
+        shap = comp['shapiro']
+        dist_str = f"{'Normal' if shap['normal'] else 'No Normal'} ({shap['p_valor']:.4f})"
+        row_cells[1].text = dist_str
+        
+        # t-Student
+        t_stud = comp['t_student']
+        row_cells[2].text = f"{t_stud['p_valor_original']:.4f} / {t_stud['p_valor_corregido']:.4f}"
+        
+        # Wilcoxon
+        wilc = comp['wilcoxon']
+        row_cells[3].text = f"{wilc['p_valor_original']:.4f} / {wilc['p_valor_corregido']:.4f}"
+        
+        # Cohen's d
+        d_val = comp['cohens_d']
+        row_cells[4].text = f"{d_val['valor']:.2f} ({d_val['interpretacion']})"
+        
+        # Interpretación
+        row_cells[5].text = comp['interpretacion']
         
     # Conclusión clínica
     doc.add_paragraph().add_run("\n5. CONCLUSIÓN Y RECOMENDACIONES CLÍNICAS").bold = True
@@ -259,7 +278,7 @@ def generar_word_report(resultados_cv, pruebas_stats, ruta_salida=None):
     
     doc.save(ruta_salida)
     return ruta_salida
-
+ 
 class PDFReporte(FPDF):
     """Clase personalizada para FPDF con cabecera y pie de página"""
     def header(self):
@@ -274,7 +293,7 @@ class PDFReporte(FPDF):
         self.set_font('Arial', 'I', 8)
         self.set_text_color(128, 128, 128)
         self.cell(0, 10, f'Página {self.page_no()}/{{nb}} - Soporte Diagnóstico IA', 0, 0, 'C')
-
+ 
 def generar_pdf_report(resultados_cv, pruebas_stats, ruta_salida=None):
     """Genera reporte consolidado en PDF con FPDF"""
     if FPDF is None:
@@ -334,19 +353,39 @@ def generar_pdf_report(resultados_cv, pruebas_stats, ruta_salida=None):
         pdf.ln(4)
         
     # Comparaciones pares
-    pdf.set_font('Arial', 'B', 9)
+    pdf.set_font('Arial', 'B', 8)
     pdf.set_fill_color(240, 240, 240)
-    pdf.cell(50, 7, 'Comparación de Modelos', 1, 0, 'C', True)
-    pdf.cell(35, 7, 'p-valor (t-Student)', 1, 0, 'C', True)
-    pdf.cell(35, 7, 'p-valor (Wilcoxon)', 1, 0, 'C', True)
-    pdf.cell(60, 7, 'Conclusión', 1, 1, 'C', True)
+    pdf.cell(35, 7, 'Comparación', 1, 0, 'C', True)
+    pdf.cell(30, 7, 'Shapiro p-val', 1, 0, 'C', True)
+    pdf.cell(35, 7, 't-Student (Orig/Holm)', 1, 0, 'C', True)
+    pdf.cell(35, 7, 'Wilcoxon (Orig/Holm)', 1, 0, 'C', True)
+    pdf.cell(25, 7, 'd de Cohen', 1, 0, 'C', True)
+    pdf.cell(30, 7, 'Significativo', 1, 1, 'C', True)
     
-    pdf.set_font('Arial', '', 8)
+    pdf.set_font('Arial', '', 7.5)
     for comp in pruebas_stats.get('comparaciones_pares', []):
-        pdf.cell(50, 6, f"{comp['modelo1'].upper()} vs {comp['modelo2'].upper()}", 1, 0, 'C')
-        pdf.cell(35, 6, f"{comp['t_student']['p_valor']:.4f}", 1, 0, 'C')
-        pdf.cell(35, 6, f"{comp['wilcoxon']['p_valor']:.4f}", 1, 0, 'C')
-        pdf.cell(60, 6, comp['interpretacion'][:35] + "...", 1, 1, 'C')
+        pdf.cell(35, 6, f"{comp['modelo1'].upper()} vs {comp['modelo2'].upper()}", 1, 0, 'C')
+        
+        # Shapiro
+        shap = comp['shapiro']
+        pdf.cell(30, 6, f"{shap['p_valor']:.3f} ({'Norm' if shap['normal'] else 'No N.'})", 1, 0, 'C')
+        
+        # t-Student
+        t_stud = comp['t_student']
+        pdf.cell(35, 6, f"{t_stud['p_valor_original']:.3f} / {t_stud['p_valor_corregido']:.3f}", 1, 0, 'C')
+        
+        # Wilcoxon
+        wilc = comp['wilcoxon']
+        pdf.cell(35, 6, f"{wilc['p_valor_original']:.3f} / {wilc['p_valor_corregido']:.3f}", 1, 0, 'C')
+        
+        # Cohen's d
+        d_val = comp['cohens_d']
+        pdf.cell(25, 6, f"{d_val['valor']:.2f} ({d_val['interpretacion'][:5]})", 1, 0, 'C')
+        
+        # Significativo
+        normal = shap['normal']
+        p_val = t_stud['p_valor_corregido'] if normal else wilc['p_valor_corregido']
+        pdf.cell(30, 6, "Si" if p_val < 0.05 else "No", 1, 1, 'C')
         
     # 3. Diagrama de Validación
     pdf.add_page()
@@ -375,7 +414,7 @@ def generar_pdf_report(resultados_cv, pruebas_stats, ruta_salida=None):
     pdf.set_font('Arial', '', 9)
     pdf.cell(0, 5, f"Sistema Experto de Diagnostico Ocular - ID Validacion: {datetime.now().strftime('%Y%m%d%H%M%S')}", 0, 1, 'C')
     pdf.cell(0, 5, "Validez Tecnica y Cientifica bajo validacion cruzada rigurosa", 0, 1, 'C')
-
+ 
     # Guardar PDF
     pdf.output(ruta_salida)
     return ruta_salida
