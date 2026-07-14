@@ -214,6 +214,15 @@ async def predict(request: Request, file: UploadFile = File(...), user: str = De
     img_orig_400 = cv2.resize(img_orig_np, (400, 400))
     img_clahe_400 = aplicar_clahe(img_orig_400)
     
+    # Calcular histogramas de luminancia (L)
+    lab_orig = cv2.cvtColor(img_orig_400, cv2.COLOR_RGB2LAB)
+    l_orig = cv2.split(lab_orig)[0]
+    hist_orig = cv2.calcHist([l_orig], [0], None, [16], [0, 256]).flatten().tolist()
+    
+    lab_clahe = cv2.cvtColor(img_clahe_400, cv2.COLOR_RGB2LAB)
+    l_clahe = cv2.split(lab_clahe)[0]
+    hist_clahe = cv2.calcHist([l_clahe], [0], None, [16], [0, 256]).flatten().tolist()
+    
     return {
         "diagnostico_principal": {
             "clase_id": predicted_class_name,
@@ -229,5 +238,10 @@ async def predict(request: Request, file: UploadFile = File(...), user: str = De
             "original": encode_img_to_base64(img_orig_400),
             "clahe": encode_img_to_base64(img_clahe_400),
             "gradcam": img_gradcam_b64
+        },
+        "histogramas": {
+            "bins": [f"{i*16}-{(i+1)*16-1}" for i in range(16)],
+            "original": hist_orig,
+            "clahe": hist_clahe
         }
     }

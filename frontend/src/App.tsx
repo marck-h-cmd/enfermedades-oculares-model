@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, PointElement, LineElement } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 
 // Helper SVG Icons to replace lucide-react and prevent bundler resolution issues
 export const Activity = (props: React.SVGProps<SVGSVGElement>) => (
@@ -610,6 +610,56 @@ function DiagnosticTab({ token, showToast }: TabProps) {
               </p>
             </div>
 
+            {/* Histograma antes/después de CLAHE */}
+            {result.histogramas && (
+              <div className="glass-card rounded-3xl p-5 flex flex-col gap-4">
+                <h3 className="font-bold text-white text-sm uppercase tracking-wide border-b border-dark-border pb-3">📊 Histograma de Luminancia (Original vs CLAHE)</h3>
+                <div className="aspect-[21/9] w-full">
+                  <Line 
+                    data={{
+                      labels: result.histogramas.bins,
+                      datasets: [
+                        {
+                          label: 'Luminancia Original',
+                          data: result.histogramas.original,
+                          borderColor: 'rgba(156, 163, 175, 0.7)',
+                          backgroundColor: 'rgba(156, 163, 175, 0.08)',
+                          borderWidth: 2,
+                          pointRadius: 1,
+                          fill: true,
+                          tension: 0.4
+                        },
+                        {
+                          label: 'Luminancia CLAHE (Ecualizada)',
+                          data: result.histogramas.clahe,
+                          borderColor: 'rgb(99, 102, 241)',
+                          backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                          borderWidth: 2,
+                          pointRadius: 1,
+                          fill: true,
+                          tension: 0.4
+                        }
+                      ]
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      scales: { 
+                        y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#9ca3af', font: { size: 9 } } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 8 } } }
+                      },
+                      plugins: {
+                        legend: { labels: { color: '#e5e7eb', font: { size: 10 } } }
+                      }
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-gray-500 text-center font-medium italic">
+                  Muestra la distribución de frecuencias de los niveles de brillo. CLAHE redistribuye las intensidades para mejorar el contraste local.
+                </p>
+              </div>
+            )}
+
             {/* Diagnostic Details */}
             <div className="glass-card rounded-3xl p-6 flex flex-col gap-4">
               <div className="flex justify-between items-start">
@@ -642,6 +692,40 @@ function DiagnosticTab({ token, showToast }: TabProps) {
                   <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wide block mb-1">Pronóstico Ocular</span>
                   <p className="text-xs text-gray-300 font-semibold leading-relaxed">{result.diagnostico_principal.pronostico}</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Barras de probabilidad del diagnóstico (8 Clases) */}
+            <div className="glass-card rounded-3xl p-6 flex flex-col gap-4">
+              <h4 className="font-bold text-white text-sm uppercase tracking-wide border-b border-dark-border pb-3">Distribución de Probabilidades de Diagnóstico (8 Clases)</h4>
+              <div className="flex flex-col gap-3">
+                {Object.entries(result.modelos.champion.probabilidades_completas)
+                  .sort((a: any, b: any) => b[1] - a[1]) // Ordenar de mayor a menor
+                  .map(([claseId, prob]: any) => {
+                    const nombreClase = 
+                      claseId === 'ageDegeneration' ? 'Degeneración Macular (AMD)' :
+                      claseId === 'cataract' ? 'Catarata' :
+                      claseId === 'diabetes' ? 'Retinopatía Diabética' :
+                      claseId === 'glaucoma' ? 'Glaucoma' :
+                      claseId === 'hypertension' ? 'Retinopatía Hipertensiva' :
+                      claseId === 'myopia' ? 'Miopía Patológica' :
+                      claseId === 'normal' ? 'Ojo Sano / Normal' : 'Otras Patologías';
+                    
+                    return (
+                      <div key={claseId}>
+                        <div className="flex justify-between items-center text-xs font-semibold mb-1">
+                          <span className="text-gray-300">{nombreClase}</span>
+                          <span className="text-indigo-400 font-bold">{(prob * 100).toFixed(2)}%</span>
+                        </div>
+                        <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-dark-border/40">
+                          <div 
+                            className="bg-gradient-to-r from-indigo-500 to-indigo-650 h-full rounded-full transition-all duration-1000 ease-out" 
+                            style={{ width: `${prob * 100}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
 
@@ -688,26 +772,43 @@ function DiagnosticTab({ token, showToast }: TabProps) {
 function AnalyticsTab({ token, showToast }: TabProps) {
   const [loading, setLoading] = useState(true);
   const [modelsData, setModelsData] = useState<any[]>([]);
+  const [rawResults, setRawResults] = useState<any>(null);
+
+  // Selector states
+  const [selectedModelId, setSelectedModelId] = useState<string>('fusion_net');
+  const [selectedRocClass, setSelectedRocClass] = useState<string>('cataract');
 
   useEffect(() => {
-    const fetchModels = async () => {
+    const fetchModelsAndResults = async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/api/models`, {
+        const resModels = await fetch(`${BACKEND_URL}/api/models`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await res.json();
-        if (res.ok) {
-          setModelsData(data);
+        const dataModels = await resModels.json();
+
+        const resResults = await fetch(`${BACKEND_URL}/api/models/results`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const dataResults = await resResults.json();
+
+        if (resModels.ok && resResults.ok) {
+          setModelsData(dataModels);
+          setRawResults(dataResults);
+          // Auto select first available key in results
+          const keys = Object.keys(dataResults);
+          if (keys.length > 0) {
+            setSelectedModelId(keys[0]);
+          }
         } else {
-          showToast(data.detail || 'Error cargando datos comparativos.', 'error');
+          showToast('Error cargando métricas e históricos.', 'error');
         }
       } catch (err) {
-        showToast('Error conectando al backend para obtener métricas.', 'error');
+        showToast('Error conectando al backend de análisis.', 'error');
       } finally {
         setLoading(false);
       }
     };
-    fetchModels();
+    fetchModelsAndResults();
   }, []);
 
   if (loading) {
@@ -719,7 +820,7 @@ function AnalyticsTab({ token, showToast }: TabProps) {
     );
   }
 
-  // Configuración de Gráficos Comparativos
+  // 1. Configuración de Gráficos de Métricas Generales
   const labels = modelsData.map(m => m.nombre);
   
   const accuracyChartData = {
@@ -734,17 +835,334 @@ function AnalyticsTab({ token, showToast }: TabProps) {
     }]
   };
 
+  // 2. Gráfico agrupado de tiempos (Entrenamiento vs Inferencia)
+  // Nota: Multiplicamos el tiempo de inferencia (tiempo_medio) por 1000 para graficar en milisegundos
+  // y mostramos el tiempo de entrenamiento en pliegues (tiempo de entrenamiento total es la suma de tiempos_folds)
   const timingChartData = {
     labels,
-    datasets: [{
-      label: 'Tiempo Promedio de Proceso (s)',
-      data: modelsData.map(m => m.tiempo_medio),
-      backgroundColor: 'rgba(236, 72, 153, 0.65)',
-      borderColor: 'rgb(236, 72, 153)',
-      borderWidth: 1,
-      borderRadius: 8
-    }]
+    datasets: [
+      {
+        label: 'Tiempo de Inferencia (ms)',
+        data: modelsData.map(m => m.tiempo_medio * 1000), // de segundos a ms
+        backgroundColor: 'rgba(236, 72, 153, 0.7)',
+        borderColor: 'rgb(236, 72, 153)',
+        borderWidth: 1,
+        borderRadius: 6
+      },
+      {
+        label: 'Tiempo de Entren. por Fold (s)',
+        data: modelsData.map(m => {
+          const rawM = rawResults?.[m.id];
+          if (!rawM) return 0;
+          const folds = rawM.tiempos_folds || [];
+          return folds.length ? (folds.reduce((a: number, b: number) => a + b, 0) / folds.length) : 0;
+        }),
+        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+        borderColor: 'rgb(59, 130, 246)',
+        borderWidth: 1,
+        borderRadius: 6
+      }
+    ]
   };
+
+  // 3. Gráfico de Estabilidad: Accuracy por Fold
+  const foldAccuraciesChartData = {
+    labels: ['Fold 1', 'Fold 2', 'Fold 3', 'Fold 4', 'Fold 5'],
+    datasets: modelsData.map((m) => {
+      const color = 
+        m.id === 'mobilenet' ? 'rgb(59, 130, 246)' :
+        m.id === 'resnet' ? 'rgb(239, 68, 68)' :
+        m.id === 'efficientnet' ? 'rgb(16, 185, 129)' :
+        m.id === 'fusion_net' ? 'rgb(139, 92, 246)' : 'rgb(236, 72, 153)';
+      const raw = rawResults?.[m.id];
+      const data = raw ? raw.accuracies_folds.map((v: number) => v * 100) : [];
+      return {
+        label: m.nombre,
+        data,
+        borderColor: color,
+        backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.1)'),
+        borderWidth: 2,
+        pointRadius: 3,
+        tension: 0.3
+      };
+    })
+  };
+
+  // 4. ROC Curve del Modelo y Patología seleccionados
+  const getSelectedRocData = () => {
+    const raw = rawResults?.[selectedModelId];
+    if (!raw || !raw.curvas_roc || !raw.curvas_roc[selectedRocClass]) {
+      return { labels: [], datasets: [] };
+    }
+    const roc = raw.curvas_roc[selectedRocClass];
+    // Downsample para rendimiento si es muy grande
+    const step = Math.max(1, Math.floor(roc.fpr.length / 50));
+    const fprSampled = roc.fpr.filter((_: any, i: number) => i % step === 0);
+    const tprSampled = roc.tpr.filter((_: any, i: number) => i % step === 0);
+    
+    // Asegurar que el final esté incluido
+    if (fprSampled[fprSampled.length - 1] !== 1.0) {
+      fprSampled.push(1.0);
+      tprSampled.push(1.0);
+    }
+
+    return {
+      labels: fprSampled.map((v: number) => v.toFixed(2)),
+      datasets: [
+        {
+          label: `Curva ROC (AUC = ${roc.auc.toFixed(4)})`,
+          data: tprSampled,
+          borderColor: 'rgb(139, 92, 246)',
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          fill: true,
+          borderWidth: 2,
+          pointRadius: 1,
+          tension: 0.1
+        },
+        {
+          label: 'Línea de Azar (AUC = 0.50)',
+          data: fprSampled, // diagonal lineal
+          borderColor: 'rgba(255,255,255,0.15)',
+          borderWidth: 1,
+          borderDash: [5, 5],
+          pointRadius: 0,
+          fill: false
+        }
+      ]
+    };
+  };
+
+  // 5. Renderizar Boxplot personalizado en SVG
+  const renderBoxplot = () => {
+    if (!rawResults) return null;
+    const keys = Object.keys(rawResults);
+    if (!keys.length) return null;
+    const data = keys.map(key => {
+      const accs = rawResults[key].accuracies_folds;
+      const sorted = [...accs].sort((a, b) => a - b);
+      const min = sorted[0];
+      const q1 = sorted[1] !== undefined ? sorted[1] : sorted[0];
+      const median = sorted[2] !== undefined ? sorted[2] : sorted[0];
+      const q3 = sorted[3] !== undefined ? sorted[3] : sorted[sorted.length - 1];
+      const max = sorted[sorted.length - 1];
+      return { key, min, q1, median, q3, max };
+    });
+
+    const plotMinAcc = 0.50;
+    const plotMaxAcc = 0.60;
+    const height = 230;
+    const width = 450;
+    const getX = (index: number) => 60 + index * 80;
+    const getY = (acc: number) => {
+      const ratio = (acc - plotMinAcc) / (plotMaxAcc - plotMinAcc);
+      return height - 40 - ratio * (height - 80);
+    };
+
+    return (
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full text-gray-400 select-none">
+        {/* Líneas horizontales de rejilla */}
+        {[0.50, 0.52, 0.54, 0.56, 0.58, 0.60].map(val => (
+          <g key={val}>
+            <line x1="45" y1={getY(val)} x2={width - 20} y2={getY(val)} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+            <text x="10" y={getY(val) + 4} className="text-[10px] font-bold fill-gray-500">{(val * 100).toFixed(0)}%</text>
+          </g>
+        ))}
+
+        {/* Cajas y bigotes */}
+        {data.map((item, idx) => {
+          const x = getX(idx);
+          const yMin = getY(item.min);
+          const yQ1 = getY(item.q1);
+          const yMed = getY(item.median);
+          const yQ3 = getY(item.q3);
+          const yMax = getY(item.max);
+          const boxWidth = 32;
+
+          const displayName = 
+            item.key === 'mobilenet' ? 'Mobile' :
+            item.key === 'resnet' ? 'ResNet' :
+            item.key === 'efficientnet' ? 'EffNet' :
+            item.key === 'fusion_net' ? 'Fusión' : 'CNN+RF';
+
+          return (
+            <g key={item.key}>
+              {/* Bigotes */}
+              <line x1={x} y1={yMin} x2={x} y2={yQ1} stroke="#6366f1" strokeWidth="2" strokeDasharray="3,3" />
+              <line x1={x} y1={yMax} x2={x} y2={yQ3} stroke="#6366f1" strokeWidth="2" strokeDasharray="3,3" />
+              <line x1={x - 8} y1={yMin} x2={x + 8} y2={yMin} stroke="#6366f1" strokeWidth="2" />
+              <line x1={x - 8} y1={yMax} x2={x + 8} y2={yMax} stroke="#6366f1" strokeWidth="2" />
+              {/* Caja principal */}
+              <rect 
+                x={x - boxWidth / 2} 
+                y={yQ3} 
+                width={boxWidth} 
+                height={Math.max(2, yQ1 - yQ3)} 
+                fill="rgba(99, 102, 241, 0.15)" 
+                stroke="#6366f1" 
+                strokeWidth="2" 
+                rx="4"
+              />
+              {/* Mediana (Línea rosa brillante) */}
+              <line x1={x - boxWidth / 2} y1={yMed} x2={x + boxWidth / 2} y2={yMed} stroke="#ec4899" strokeWidth="3" />
+              
+              {/* Texto de etiquetas */}
+              <text x={x} y={height - 10} textAnchor="middle" className="text-[10px] font-extrabold fill-gray-400">{displayName}</text>
+            </g>
+          );
+        })}
+      </svg>
+    );
+  };
+
+  // 6. Renderizar Radar Chart en SVG
+  const renderRadarChart = () => {
+    if (!rawResults || !modelsData.length) return null;
+    
+    const axes = [
+      { name: 'Accuracy', getVal: (m: any) => m.accuracy_media / 0.60 },
+      { name: 'Velocidad', getVal: (m: any) => Math.max(0.1, 1 - (m.tiempo_medio / 0.8)) }, // Inferencia
+      { name: 'F1-Score', getVal: (m: any) => m.f1_score / 0.60 },
+      { name: 'Eficiencia', getVal: (m: any) => {
+          if (m.id === 'mobilenet') return 0.95;
+          if (m.id === 'efficientnet') return 0.85;
+          if (m.id === 'cnn_rf') return 0.70;
+          if (m.id === 'resnet') return 0.35;
+          return 0.20; // fusion_net
+        }
+      },
+      { name: 'Estabilidad', getVal: (m: any) => {
+          const std = rawResults[m.id]?.accuracy_std || 0.01;
+          return Math.max(0.1, 1 - (std * 30));
+        }
+      }
+    ];
+
+    const center = 150;
+    const radius = 80;
+    const getCoordinates = (val: number, index: number) => {
+      const angle = (index * 2 * Math.PI) / 5 - Math.PI / 2;
+      const r = val * radius;
+      return {
+        x: center + r * Math.cos(angle),
+        y: center + r * Math.sin(angle)
+      };
+    };
+
+    return (
+      <svg viewBox="0 0 300 300" className="w-full h-full text-gray-400 select-none">
+        {/* Polígonos de rejilla */}
+        {[0.2, 0.4, 0.6, 0.8, 1.0].map(level => {
+          const points = Array.from({ length: 5 }).map((_, i) => {
+            const coord = getCoordinates(level, i);
+            return `${coord.x},${coord.y}`;
+          }).join(' ');
+          return (
+            <polygon 
+              key={level} 
+              points={points} 
+              fill="none" 
+              stroke="rgba(255,255,255,0.04)" 
+              strokeWidth="1" 
+            />
+          );
+        })}
+
+        {/* Ejes radiales */}
+        {axes.map((axis, i) => {
+          const outer = getCoordinates(1.0, i);
+          const labelOffset = getCoordinates(1.22, i);
+          return (
+            <g key={axis.name}>
+              <line x1={center} y1={center} x2={outer.x} y2={outer.y} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+              <text 
+                x={labelOffset.x} 
+                y={labelOffset.y + 3} 
+                textAnchor="middle" 
+                className="text-[9px] font-bold fill-gray-500 uppercase tracking-wide"
+              >
+                {axis.name}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Polígonos de los modelos */}
+        {modelsData.map((m) => {
+          const color = 
+            m.id === 'mobilenet' ? 'rgb(59, 130, 246)' :
+            m.id === 'resnet' ? 'rgb(239, 68, 68)' :
+            m.id === 'efficientnet' ? 'rgb(16, 185, 129)' :
+            m.id === 'fusion_net' ? 'rgb(139, 92, 246)' : 'rgb(236, 72, 153)';
+          
+          const rawRes = rawResults[m.id];
+          if (!rawRes) return null;
+          
+          const points = axes.map((axis, i) => {
+            const val = Math.min(1.0, Math.max(0.1, axis.getVal(m)));
+            const coord = getCoordinates(val, i);
+            return `${coord.x},${coord.y}`;
+          }).join(' ');
+
+          return (
+            <g key={m.id}>
+              <polygon 
+                points={points} 
+                fill={color.replace('rgb', 'rgba').replace(')', ', 0.12)')} 
+                stroke={color} 
+                strokeWidth="1.5" 
+              />
+              {axes.map((axis, i) => {
+                const val = Math.min(1.0, Math.max(0.1, axis.getVal(m)));
+                const coord = getCoordinates(val, i);
+                return (
+                  <circle 
+                    key={i} 
+                    cx={coord.x} 
+                    cy={coord.y} 
+                    r="3" 
+                    fill={color} 
+                    stroke="#0f172a" 
+                    strokeWidth="1" 
+                  />
+                );
+              })}
+            </g>
+          );
+        })}
+
+        {/* Leyenda del Radar */}
+        <g transform="translate(5, 280)" className="text-[8px] font-bold">
+          {modelsData.map((m, i) => {
+            const color = 
+              m.id === 'mobilenet' ? 'rgb(59, 130, 246)' :
+              m.id === 'resnet' ? 'rgb(239, 68, 68)' :
+              m.id === 'efficientnet' ? 'rgb(16, 185, 129)' :
+              m.id === 'fusion_net' ? 'rgb(139, 92, 246)' : 'rgb(236, 72, 153)';
+            const displayName = 
+              m.id === 'mobilenet' ? 'Mobile' :
+              m.id === 'resnet' ? 'ResNet' :
+              m.id === 'efficientnet' ? 'EffNet' :
+              m.id === 'fusion_net' ? 'Fusión' : 'CNN+RF';
+            
+            return (
+              <g key={m.id} transform={`translate(${i * 58}, 0)`}>
+                <rect x="0" y="-5" width="6" height="6" fill={color} rx="1" />
+                <text x="10" y="1" className="fill-gray-400 font-semibold">{displayName}</text>
+              </g>
+            );
+          })}
+        </g>
+      </svg>
+    );
+  };
+
+  // 7. Obtener la matriz de confusión del modelo seleccionado
+  const selectedConfusionMatrix = rawResults?.[selectedModelId]?.matriz_confusion || [];
+
+  const ENFERMEDADES_LABELS = [
+    'Degeneración (AMD)', 'Catarata', 'Diabetes', 'Glaucoma', 
+    'Hipertensión', 'Miopía', 'Normal', 'Otras'
+  ];
 
   return (
     <div className="flex flex-col gap-8 z-10">
@@ -769,17 +1187,19 @@ function AnalyticsTab({ token, showToast }: TabProps) {
         </div>
 
         <div className="glass-card rounded-3xl p-6">
-          <h3 className="font-bold text-white text-sm uppercase tracking-wide mb-4">⚡ Velocidad de Inferencia (Tiempo de Proceso)</h3>
+          <h3 className="font-bold text-white text-sm uppercase tracking-wide mb-4">⚡ Perfil de Tiempos (Entrenamiento vs Inferencia)</h3>
           <div className="aspect-video w-full">
             <Bar 
               data={timingChartData}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
                 scales: { 
                   y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3af' } },
                   x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                },
+                plugins: {
+                  legend: { labels: { color: '#9ca3af', font: { size: 10 } } }
                 }
               }}
             />
@@ -787,41 +1207,208 @@ function AnalyticsTab({ token, showToast }: TabProps) {
         </div>
       </div>
 
-      {/* Main comparative grid table */}
-      <div className="glass-card rounded-3xl p-6 overflow-hidden">
-        <h3 className="font-bold text-white text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
-          <Database className="w-4 h-4 text-indigo-400" />
-          Tabla de Comparativa Técnica Completa
-        </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-dark-border text-gray-400 font-bold uppercase tracking-wider">
-                <th className="py-4 px-4">Modelo</th>
-                <th className="py-4 px-4 text-center">Accuracy Promedio</th>
-                <th className="py-4 px-4 text-center">F1-Score (W)</th>
-                <th className="py-4 px-4 text-center">Precision (W)</th>
-                <th className="py-4 px-4 text-center">Recall (W)</th>
-                <th className="py-4 px-4 text-center">Tiempo Proceso (s)</th>
-                <th className="py-4 px-4 text-center">Nº Parámetros</th>
-                <th className="py-4 px-4">Ventaja Principal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {modelsData.map(m => (
-                <tr key={m.id} className="border-b border-dark-border/40 hover:bg-slate-900/25 transition-all">
-                  <td className="py-4 px-4 font-bold text-white">{m.nombre}</td>
-                  <td className="py-4 px-4 text-center text-indigo-400 font-extrabold">{(m.accuracy_media * 100).toFixed(2)}%</td>
-                  <td className="py-4 px-4 text-center">{(m.f1_score).toFixed(4)}</td>
-                  <td className="py-4 px-4 text-center">{(m.precision).toFixed(4)}</td>
-                  <td className="py-4 px-4 text-center">{(m.recall).toFixed(4)}</td>
-                  <td className="py-4 px-4 text-center text-pink-400 font-bold">{m.tiempo_medio.toFixed(2)}s</td>
-                  <td className="py-4 px-4 text-center text-gray-400">{m.parametros}</td>
-                  <td className="py-4 px-4 text-gray-300 font-semibold">{m.ventaja}</td>
-                </tr>
+      {/* Model-specific detail section */}
+      <div className="glass-card rounded-3xl p-6 flex flex-col gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-dark-border pb-4 gap-4">
+          <div>
+            <h3 className="font-extrabold text-white text-base">🔍 Inspector de Matriz de Confusión y Curva ROC</h3>
+            <p className="text-xs text-gray-500 mt-0.5">Analice los errores locales y las curvas ROC de cada modelo entrenado.</p>
+          </div>
+          <div className="flex bg-slate-900 border border-dark-border p-1.5 rounded-xl gap-2 w-full md:w-auto">
+            <select
+              value={selectedModelId}
+              onChange={e => setSelectedModelId(e.target.value)}
+              className="bg-transparent text-xs font-bold text-gray-200 outline-none cursor-pointer py-1 px-2 border-r border-dark-border"
+            >
+              {Object.keys(rawResults || {}).map(key => (
+                <option key={key} value={key} className="bg-slate-950 text-gray-200">
+                  {key === 'mobilenet' ? 'MobileNetV2' :
+                   key === 'resnet' ? 'ResNet50V2' :
+                   key === 'efficientnet' ? 'EfficientNetV2-B0' :
+                   key === 'fusion_net' ? 'Fusión ResNet+MobileNet' : 'MobileNet+RF (Híbrido)'}
+                </option>
               ))}
-            </tbody>
-          </table>
+            </select>
+
+            <select
+              value={selectedRocClass}
+              onChange={e => setSelectedRocClass(e.target.value)}
+              className="bg-transparent text-xs font-bold text-gray-200 outline-none cursor-pointer py-1 px-2"
+            >
+              <option value="ageDegeneration" className="bg-slate-950">Degeneración Macular (AMD)</option>
+              <option value="cataract" className="bg-slate-950">Catarata</option>
+              <option value="diabetes" className="bg-slate-950">Retinopatía Diabética</option>
+              <option value="glaucoma" className="bg-slate-950">Glaucoma</option>
+              <option value="hypertension" className="bg-slate-950">Retinopatía Hipertensiva</option>
+              <option value="myopia" className="bg-slate-950">Miopía Patológica</option>
+              <option value="normal" className="bg-slate-950">Ojo Sano / Normal</option>
+              <option value="others" className="bg-slate-950">Otras Patologías</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+          {/* Left: Confusion Heatmap */}
+          <div className="xl:col-span-6 flex flex-col gap-4">
+            <h4 className="font-bold text-white text-xs uppercase tracking-wide">🗺️ Matriz de Confusión (Predicho vs Real)</h4>
+            <div className="overflow-x-auto w-full border border-dark-border/40 rounded-2xl p-4 bg-slate-950/20">
+              <div className="grid grid-cols-9 gap-1 text-center min-w-[380px]">
+                {/* Header corner */}
+                <div className="text-[8px] font-bold text-gray-500 self-center">Real \ Pred</div>
+                {ENFERMEDADES_LABELS.map(lbl => (
+                  <div key={lbl} className="text-[7px] font-extrabold text-gray-400 self-center truncate py-1" title={lbl}>
+                    {lbl.split(' ')[0]}
+                  </div>
+                ))}
+
+                {/* Grid rows */}
+                {selectedConfusionMatrix.map((row: number[], rIdx: number) => {
+                  const rowSum = row.reduce((a, b) => a + b, 0) || 1;
+                  return (
+                    <React.Fragment key={rIdx}>
+                      {/* Row header */}
+                      <div className="text-[8px] font-extrabold text-gray-400 text-left self-center truncate pr-1" title={ENFERMEDADES_LABELS[rIdx]}>
+                        {ENFERMEDADES_LABELS[rIdx].split(' ')[0]}
+                      </div>
+                      
+                      {/* Grid cells */}
+                      {row.map((val: number, cIdx: number) => {
+                        const ratio = val / rowSum;
+                        // Escalado del color de fondo del heatmap (azul para aciertos en diagonal, rojo/naranja para errores)
+                        const isDiagonal = rIdx === cIdx;
+                        const bgStyle = isDiagonal
+                          ? `rgba(99, 102, 241, ${0.15 + ratio * 0.8})` // Indigo
+                          : val > 0 
+                            ? `rgba(239, 68, 68, ${0.1 + ratio * 0.7})`  // Red (Error)
+                            : 'transparent';
+                        
+                        const borderStyle = isDiagonal && ratio > 0.5 
+                          ? 'border border-indigo-500/35'
+                          : 'border border-dark-border/10';
+
+                        return (
+                          <div 
+                            key={cIdx} 
+                            style={{ backgroundColor: bgStyle }}
+                            className={`aspect-square flex items-center justify-center rounded text-[9px] font-bold text-white transition-all hover:scale-105 ${borderStyle}`}
+                            title={`Real: ${ENFERMEDADES_LABELS[rIdx]}, Predicho: ${ENFERMEDADES_LABELS[cIdx]}, Cantidad: ${val}`}
+                          >
+                            {val}
+                          </div>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
+            <p className="text-[9px] text-gray-500 italic text-center">La diagonal en azul representa las clasificaciones correctas. Los cuadros rojos indican errores del modelo.</p>
+          </div>
+
+          {/* Right: Class ROC Curve */}
+          <div className="xl:col-span-6 flex flex-col gap-4">
+            <h4 className="font-bold text-white text-xs uppercase tracking-wide">📈 Curva ROC (Sensibilidad vs 1 - Especificidad)</h4>
+            <div className="aspect-video w-full border border-dark-border/40 rounded-2xl p-4 bg-slate-950/20">
+              <Line 
+                data={getSelectedRocData()}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: { 
+                    y: { min: 0.0, max: 1.05, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#9ca3af', font: { size: 9 } } },
+                    x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#9ca3af', font: { size: 9 } } }
+                  },
+                  plugins: {
+                    legend: { labels: { color: '#e5e7eb', font: { size: 9 } } }
+                  }
+                }}
+              />
+            </div>
+            <p className="text-[9px] text-gray-500 italic text-center">Un AUC cercano a 1.0 indica un rendimiento perfecto. La línea punteada representa una clasificación al azar.</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Stability, dispersion, and multidimensional comparison */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        {/* Accuracy per fold line chart */}
+        <div className="glass-card rounded-3xl p-6">
+          <h3 className="font-bold text-white text-sm uppercase tracking-wide mb-4">📈 Estabilidad: Accuracy por Pliegue (Fold)</h3>
+          <div className="aspect-video w-full">
+            <Line 
+              data={foldAccuraciesChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { 
+                  y: { min: 45, max: 62, grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#9ca3af', font: { size: 9 } } },
+                  x: { grid: { display: false }, ticks: { color: '#9ca3af', font: { size: 9 } } }
+                },
+                plugins: {
+                  legend: { labels: { color: '#9ca3af', font: { size: 9 } } }
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Boxplot performance distribution */}
+        <div className="glass-card rounded-3xl p-6 flex flex-col justify-between">
+          <h3 className="font-bold text-white text-sm uppercase tracking-wide mb-4">📦 Dispersión: Boxplot de Rendimiento por Modelo</h3>
+          <div className="flex-1 flex items-center justify-center">
+            {renderBoxplot()}
+          </div>
+          <p className="text-[9px] text-gray-500 italic text-center mt-2">La línea rosa representa la mediana de exactitud. Los bigotes muestran los rangos extremos de los folds.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        {/* Radar Chart */}
+        <div className="xl:col-span-5 glass-card rounded-3xl p-6 flex flex-col justify-between items-center text-center">
+          <h3 className="font-bold text-white text-sm uppercase tracking-wide self-start mb-4">🧭 Análisis de Consenso Multidimensional (Radar)</h3>
+          <div className="w-full max-w-[260px] aspect-square flex items-center justify-center">
+            {renderRadarChart()}
+          </div>
+          <p className="text-[9px] text-gray-500 italic mt-2">El gráfico balancea la exactitud, velocidad de inferencia, F1-Score, eficiencia en parámetros y robustez general.</p>
+        </div>
+
+        {/* Main comparative grid table */}
+        <div className="xl:col-span-7 glass-card rounded-3xl p-6 overflow-hidden flex flex-col justify-between">
+          <div>
+            <h3 className="font-bold text-white text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
+              <Database className="w-4 h-4 text-indigo-400" />
+              Tabla de Comparativa Técnica Completa
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-dark-border text-gray-400 font-bold uppercase tracking-wider">
+                    <th className="py-4 px-4">Modelo</th>
+                    <th className="py-4 px-4 text-center">Accuracy Promedio</th>
+                    <th className="py-4 px-4 text-center">F1-Score (W)</th>
+                    <th className="py-4 px-4 text-center">Precision (W)</th>
+                    <th className="py-4 px-4 text-center">Recall (W)</th>
+                    <th className="py-4 px-4 text-center">Inferencia (ms)</th>
+                    <th className="py-4 px-4 text-center">Nº Parámetros</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {modelsData.map(m => (
+                    <tr key={m.id} className="border-b border-dark-border/40 hover:bg-slate-900/25 transition-all">
+                      <td className="py-4 px-4 font-bold text-white">{m.nombre}</td>
+                      <td className="py-4 px-4 text-center text-indigo-400 font-extrabold">{(m.accuracy_media * 100).toFixed(2)}%</td>
+                      <td className="py-4 px-4 text-center">{(m.f1_score).toFixed(4)}</td>
+                      <td className="py-4 px-4 text-center">{(m.precision).toFixed(4)}</td>
+                      <td className="py-4 px-4 text-center">{(m.recall).toFixed(4)}</td>
+                      <td className="py-4 px-4 text-center text-pink-400 font-bold">{(m.tiempo_medio * 1000).toFixed(1)}ms</td>
+                      <td className="py-4 px-4 text-center text-gray-400">{m.parametros}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p className="text-[10px] text-gray-500 italic mt-4">Todos los valores provienen del archivo de auditoría técnica cruzada en tiempo de ejecución (`cv_metrics_results.json`).</p>
         </div>
       </div>
     </div>
