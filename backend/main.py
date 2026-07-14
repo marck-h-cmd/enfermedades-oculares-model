@@ -15,7 +15,7 @@ try:
 except AttributeError:
     pass
 
-from backend import auth, predict, stats, reports
+from backend import auth, predict, stats, reports, chat
 
 # Rutas de los modelos entrenados
 MODELS_PATHS = {
@@ -81,10 +81,17 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Configurar CORS para conectar con React en el puerto 5173
+# Configurar CORS para conectar con React/Next.js en el puerto 3000/5173
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -118,6 +125,7 @@ def login(req: LoginRequest):
 app.include_router(predict.router)
 app.include_router(stats.router)
 app.include_router(reports.router)
+app.include_router(chat.router)
 
 if __name__ == "__main__":
     import uvicorn
