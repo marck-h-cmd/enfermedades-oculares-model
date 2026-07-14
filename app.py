@@ -2207,7 +2207,7 @@ Arquitecturas evaluadas:
         modelos_disponibles = {
             'mobilenet': 'MobileNetV2 (Clásico)',
             'resnet': 'ResNet50V2 (Clásico)',
-            'efficientnet': 'EfficientNetB0 (Clásico)',
+            'efficientnet': 'EfficientNetV2-B0 (Clásico)',
             'fusion_net': 'Fusión ResNet+MobileNet (Híbrido 1)',
             'cnn_rf': 'MobileNet + Random Forest (Híbrido 2)'
         }

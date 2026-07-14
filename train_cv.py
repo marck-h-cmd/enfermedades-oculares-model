@@ -14,7 +14,7 @@ import pandas as pd
 import tensorflow as tf
 from tensorflow.keras import layers, Model, Input
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.applications import MobileNetV2, ResNet50V2, EfficientNetB0
+from tensorflow.keras.applications import MobileNetV2, ResNet50V2, EfficientNetV2B0
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from sklearn.model_selection import StratifiedKFold
@@ -85,7 +85,7 @@ class EntrenadorCrossValidation:
             for capa in modelo_base.layers[:-25]:
                 capa.trainable = False
         elif arquitectura == 'efficientnet':
-            modelo_base = EfficientNetB0(weights='imagenet', include_top=False, input_tensor=entrada)
+            modelo_base = EfficientNetV2B0(weights='imagenet', include_top=False, input_tensor=entrada)
             # Fine tuning
             modelo_base.trainable = True
             for capa in modelo_base.layers[:-15]:

@@ -14,7 +14,7 @@ import pandas as pd
 import tensorflow as tf
 from keras import layers, Model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from keras.applications import MobileNetV2, EfficientNetB0, ResNet50V2
+from keras.applications import MobileNetV2, EfficientNetV2B0, ResNet50V2
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 import warnings
@@ -155,7 +155,7 @@ class EnsembleMedico:
                 capa.trainable = False
                 
         elif arquitectura == 'efficientnet':
-            modelo_base = EfficientNetB0(
+            modelo_base = EfficientNetV2B0(
                 weights='imagenet',
                 include_top=False,
                 input_shape=(self.alto_img, self.ancho_img, 3)
