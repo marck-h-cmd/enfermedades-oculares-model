@@ -13,3 +13,7 @@ scikit-learn
 scipy
 python-docx
 openpyxl
+fastapi
+uvicorn
+python-multipart
+pyjwt

@@ -1,0 +1,12 @@
+{
+  "active_version": "v1",
+  "versions": {
+    "v1": {
+      "timestamp": "2026-07-13T23:45:00Z",
+      "meta_file": "models/best_model_meta_v1.json",
+      "nn_model_file": "models/best_ocular_model_v1.h5",
+      "rf_model_file": "models/best_rf_classifier_v1.pkl",
+      "description": "Modelo inicial con soporte estadístico robusto y EfficientNetV2B0"
+    }
+  }
+}
