@@ -4,8 +4,8 @@ import pandas as pd
 import ast
 
 def organizar():
-    csv_path = r"Dataset/DATASET_DESCARGADO/full_df.csv"
-    src_dir = r"Dataset/DATASET_DESCARGADO/preprocessed_images"
+    csv_path = r"Dataset/full_df.csv"
+    src_dir = r"Dataset/preprocessed_images"
     dest_base = r"Dataset"
     
     if not os.path.exists(csv_path):

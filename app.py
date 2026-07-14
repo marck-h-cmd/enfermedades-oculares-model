@@ -9,6 +9,11 @@ from PIL import Image
 import cv2
 import os
 import sys
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+except AttributeError:
+    pass
 import subprocess
 import time
 from datetime import datetime

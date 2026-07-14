@@ -1,4 +1,10 @@
 import os
+import sys
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+except AttributeError:
+    pass
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, Model
