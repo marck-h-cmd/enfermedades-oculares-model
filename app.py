@@ -2330,6 +2330,8 @@ Arquitecturas evaluadas:
             friedman = reporte.get('anova_friedman', {})
             if 'error' in friedman:
                 st.error(friedman['error'])
+            elif 'info' in friedman:
+                st.info(f"ℹ️ {friedman['info']}")
             elif 'p_valor' in friedman:
                 col_f1, col_f2, col_f3 = st.columns(3)
                 with col_f1:

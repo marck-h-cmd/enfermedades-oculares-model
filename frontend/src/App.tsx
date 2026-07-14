@@ -873,32 +873,47 @@ function StatsTab({ token, showToast }: TabProps) {
               <span className="text-[10px] text-gray-500 font-extrabold uppercase tracking-wide block mb-1">Prueba Global No Paramétrica</span>
               <h3 className="font-extrabold text-white text-base">Prueba de Friedman</h3>
             </div>
-            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-              statsData.anova_friedman.significativo ? 'bg-emerald-950/50 border border-emerald-500/30 text-emerald-300' : 'bg-slate-900 border border-dark-border text-gray-400'
-            }`}>
-              {statsData.anova_friedman.significativo ? 'Significativo ✅' : 'No Significativo ❌'}
-            </span>
+            {statsData.anova_friedman.p_valor !== undefined && (
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
+                statsData.anova_friedman.significativo ? 'bg-emerald-950/50 border border-emerald-500/30 text-emerald-300' : 'bg-slate-900 border border-dark-border text-gray-400'
+              }`}>
+                {statsData.anova_friedman.significativo ? 'Significativo ✅' : 'No Significativo ❌'}
+              </span>
+            )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-            <div className="p-4 bg-slate-900/30 border border-dark-border/40 rounded-2xl">
-              <span className="text-[10px] text-gray-500 font-bold block uppercase mb-1">Estadístico Chi-cuadrado</span>
-              <span className="text-2xl font-black text-white">{statsData.anova_friedman.estadistico.toFixed(4)}</span>
+          {statsData.anova_friedman.info ? (
+            <div className="bg-slate-950/40 border border-dark-border/60 rounded-2xl p-4 text-xs font-medium text-gray-300 leading-relaxed flex items-start gap-3">
+              <Info className="w-5 h-5 text-indigo-400 shrink-0" />
+              <p className="mt-0.5">{statsData.anova_friedman.info}</p>
             </div>
-            <div className="p-4 bg-slate-900/30 border border-dark-border/40 rounded-2xl">
-              <span className="text-[10px] text-gray-500 font-bold block uppercase mb-1">p-valor</span>
-              <span className="text-2xl font-black text-indigo-400">{statsData.anova_friedman.p_valor.toExponential(4)}</span>
-            </div>
-            <div className="p-4 bg-slate-900/30 border border-dark-border/40 rounded-2xl">
-              <span className="text-[10px] text-gray-500 font-bold block uppercase mb-1">Número de Folds (N)</span>
-              <span className="text-2xl font-black text-white">{statsData.n_folds}</span>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div className="p-4 bg-slate-900/30 border border-dark-border/40 rounded-2xl">
+                  <span className="text-[10px] text-gray-500 font-bold block uppercase mb-1">Estadístico Chi-cuadrado</span>
+                  <span className="text-2xl font-black text-white">
+                    {statsData.anova_friedman.estadistico !== undefined ? statsData.anova_friedman.estadistico.toFixed(4) : ''}
+                  </span>
+                </div>
+                <div className="p-4 bg-slate-900/30 border border-dark-border/40 rounded-2xl">
+                  <span className="text-[10px] text-gray-500 font-bold block uppercase mb-1">p-valor</span>
+                  <span className="text-2xl font-black text-indigo-400">
+                    {statsData.anova_friedman.p_valor !== undefined ? statsData.anova_friedman.p_valor.toExponential(4) : ''}
+                  </span>
+                </div>
+                <div className="p-4 bg-slate-900/30 border border-dark-border/40 rounded-2xl">
+                  <span className="text-[10px] text-gray-500 font-bold block uppercase mb-1">Número de Folds (N)</span>
+                  <span className="text-2xl font-black text-white">{statsData.n_folds}</span>
+                </div>
+              </div>
 
-          <div className="bg-slate-950/40 border border-dark-border/60 rounded-2xl p-4 text-xs font-medium text-gray-300 leading-relaxed flex items-start gap-3">
-            <Info className="w-5 h-5 text-indigo-400 shrink-0" />
-            <p className="mt-0.5">{statsData.anova_friedman.interpretacion}</p>
-          </div>
+              <div className="bg-slate-950/40 border border-dark-border/60 rounded-2xl p-4 text-xs font-medium text-gray-300 leading-relaxed flex items-start gap-3">
+                <Info className="w-5 h-5 text-indigo-400 shrink-0" />
+                <p className="mt-0.5">{statsData.anova_friedman.interpretacion}</p>
+              </div>
+            </>
+          )}
         </div>
       )}
 
