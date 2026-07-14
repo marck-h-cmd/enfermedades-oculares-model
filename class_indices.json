@@ -6,5 +6,6 @@
   "hypertension": 4,
   "myopia": 5,
   "normal": 6,
-  "others": 7
+  "others": 7,
+  "preprocessed_images": 8
 }
