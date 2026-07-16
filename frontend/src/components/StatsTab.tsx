@@ -44,135 +44,117 @@ export default function StatsTab({ language, token, showToast }: StatsTabProps) 
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
         <p className="text-sm text-foreground/70 font-semibold">
-          {language === 'es' ? 'Ejecutando pruebas de significancia en el servidor...' : 'Running significance tests on server...'}
+          {language === 'es' ? 'Ejecutando pruebas de significancia robustas en el servidor...' : 'Running robust significance tests on server...'}
         </p>
       </div>
     );
   }
 
-  // Mapear nombres de modelos para una lectura más amigable
+  // Mapear nombres de modelos
   const getFriendlyName = (id: string) => {
     const names: Record<string, string> = {
       'mobilenet': 'MobileNetV2',
       'resnet': 'ResNet50V2',
-      'efficientnet': 'EfficientNetV2-B0',
-      'fusion_net': 'Fusión Híbrida 1',
-      'cnn_rf': 'Híbrido 2 (CNN+RF)'
+      'efficientnet': 'EfficientNetV2',
+      'fusion_net': 'Fusión ResNet+MobileNet',
+      'cnn_rf': 'CNN + Random Forest'
     };
     return names[id] || id;
   };
 
+  const friedman = statsData?.anova_friedman;
+  const nemenyi = statsData?.nemenyi;
+
   return (
     <div className="flex flex-col gap-8">
-      {/* Shapiro & Paired Tests */}
-      <div className="glass-card rounded-3xl p-6 flex flex-col gap-4">
-        <h3 className="font-bold text-foreground text-sm uppercase tracking-wide border-b border-card-border pb-3">
-          {t.hypothesisTitle}
-        </h3>
-        <p className="text-xs text-foreground/60 leading-relaxed mb-2">
-          {t.hypothesisDesc}
-        </p>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-card-border/80 text-foreground/75 font-extrabold uppercase">
-                <th className="py-3 px-4">{language === 'es' ? 'Modelo A' : 'Model A'}</th>
-                <th className="py-3 px-4">{language === 'es' ? 'Modelo B' : 'Model B'}</th>
-                <th className="py-3 px-4">Shapiro-Wilk (p-val)</th>
-                <th className="py-3 px-4">{t.pvalue}</th>
-                <th className="py-3 px-4">{t.significant}</th>
-                <th className="py-3 px-4">{t.interpretation}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-card-border/40 font-medium">
-              {statsData?.comparaciones_pares?.map((comp: any, idx: number) => {
-                const normal = comp.shapiro.normal;
-                const pValue = normal ? comp.t_student.p_valor_corregido : comp.wilcoxon.p_valor_corregido;
-                const sig = normal ? comp.t_student.significativo : comp.wilcoxon.significativo;
-                
-                // Traducción dinámica de la interpretación para bilingüismo
-                let friendlyInterpretation = comp.interpretacion;
-                if (language === 'en') {
-                  if (sig) {
-                    const m1 = getFriendlyName(comp.modelo1);
-                    const m2 = getFriendlyName(comp.modelo2);
-                    const method = normal ? "adjusted t-Student" : "adjusted Wilcoxon";
-                    friendlyInterpretation = `${m1} significantly outperforms ${m2} in accuracy (${method} p=${pValue.toFixed(4)}, Cohen's d=${comp.cohens_d.valor.toFixed(2)} [${comp.cohens_d.interpretacion}]).`;
-                  } else {
-                    friendlyInterpretation = `No statistically significant difference in accuracy between ${getFriendlyName(comp.modelo1)} and ${getFriendlyName(comp.modelo2)} (adjusted p=${pValue.toFixed(4)}).`;
-                  }
-                }
-
-                return (
-                  <tr key={idx} className="hover:bg-foreground/2 transition-colors">
-                    <td className="py-3 px-4 font-bold text-foreground">{getFriendlyName(comp.modelo1)}</td>
-                    <td className="py-3 px-4 font-bold text-foreground">{getFriendlyName(comp.modelo2)}</td>
-                    <td className="py-3 px-4 text-foreground/80">
-                      {comp.shapiro.p_valor.toFixed(4)} ({normal ? 'Normal' : 'No Normal'})
-                    </td>
-                    <td className="py-3 px-4 font-bold text-indigo-650 dark:text-indigo-400">{pValue.toFixed(6)}</td>
-                    <td className="py-3 px-4">
-                      <span className={`px-2 py-0.5 rounded-md font-extrabold uppercase text-[10px] ${
-                        sig ? 'bg-emerald-950/40 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300' : 'bg-slate-900/40 border border-slate-700/50 text-foreground/50'
-                      }`}>
-                        {sig ? t.yes : t.no}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-foreground/70 max-w-sm leading-relaxed">{friendlyInterpretation}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Cohen's d Effect Size Card */}
-      <div className="glass-card rounded-3xl p-6 flex flex-col gap-4">
-        <h3 className="font-bold text-foreground text-sm uppercase tracking-wide border-b border-card-border pb-3">
-          {t.cohenTitle}
-        </h3>
-        <p className="text-xs text-foreground/60 leading-relaxed mb-2">
-          {t.cohenDesc}
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {statsData?.comparaciones_pares?.map((comp: any, idx: number) => {
-            const dVal = comp.cohens_d.valor;
-            const interpret = comp.cohens_d.interpretacion;
+      
+      {/* Friedman Test Card */}
+      {friedman && (
+        <div className={`glass-card rounded-3xl p-6 flex flex-col gap-4 border-2 ${friedman.significativo ? 'border-emerald-500/30' : 'border-card-border'}`}>
+          <h3 className="font-bold text-foreground text-sm uppercase tracking-wide border-b border-card-border pb-3 flex items-center gap-2">
+            📊 {language === 'es' ? 'Test Global de Friedman (No Paramétrico)' : 'Global Friedman Test (Non-Parametric)'}
+          </h3>
+          
+          <div className="flex flex-col md:flex-row items-center gap-6 p-4 bg-foreground/5 rounded-2xl">
+            <div className="flex flex-col items-center justify-center min-w-[150px] p-4 rounded-xl bg-card-bg shadow-inner">
+              <span className="text-[10px] font-black uppercase text-foreground/50 mb-1">P-Value</span>
+              <span className={`text-3xl font-black ${friedman.significativo ? 'text-emerald-500' : 'text-amber-500'}`}>
+                {friedman.p_valor?.toExponential(2)}
+              </span>
+            </div>
             
-            // Traducir interpretación
-            let friendlyInterpret = interpret;
-            if (language === 'en') {
-              if (interpret === 'Grande') friendlyInterpret = 'Large';
-              else if (interpret === 'Mediana') friendlyInterpret = 'Medium';
-              else if (interpret === 'Pequeña') friendlyInterpret = 'Small';
-              else friendlyInterpret = 'Negligible';
-            }
-
-            return (
-              <div key={idx} className="p-4 bg-foreground/3 border border-card-border rounded-2xl flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] text-foreground/50 font-extrabold uppercase">
-                    {getFriendlyName(comp.modelo1)} vs {getFriendlyName(comp.modelo2)}
-                  </span>
-                  <div className="text-sm font-bold text-foreground mt-1">d = {dVal.toFixed(3)}</div>
-                </div>
-                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase ${
-                  Math.abs(dVal) >= 0.8 
-                    ? 'bg-rose-950/40 border border-rose-500/30 text-rose-600 dark:text-rose-300' 
-                    : Math.abs(dVal) >= 0.5 
-                      ? 'bg-amber-950/40 border border-amber-500/30 text-amber-600 dark:text-amber-300' 
-                      : 'bg-indigo-950/40 border border-indigo-500/30 text-indigo-600 dark:text-indigo-300'
-                }`}>
-                  {friendlyInterpret}
-                </span>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-foreground/80 mb-2">
+                {language === 'es' ? 'Interpretación:' : 'Interpretation:'}
+              </p>
+              <p className="text-sm text-foreground/70 leading-relaxed italic border-l-4 border-indigo-500/50 pl-4">
+                {language === 'en' && friedman.significativo ? "There is a statistically significant difference in the overall performance of the models (p < 0.05)." : friedman.interpretacion}
+              </p>
+              <div className="mt-3 inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-indigo-500/10 text-indigo-400">
+                {language === 'es' ? 'Estadístico:' : 'Statistic:'} {friedman.estadistico?.toFixed(2)}
               </div>
-            );
-          })}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Nemenyi Post-hoc Matrix Card */}
+      {nemenyi && nemenyi.realizado && (
+        <div className="glass-card rounded-3xl p-6 flex flex-col gap-4">
+          <h3 className="font-bold text-foreground text-sm uppercase tracking-wide border-b border-card-border pb-3 flex items-center gap-2">
+            🎯 {language === 'es' ? 'Test Post-Hoc de Nemenyi (Diferencias Críticas)' : 'Nemenyi Post-Hoc Test (Critical Differences)'}
+          </h3>
+          <p className="text-xs text-foreground/60 leading-relaxed mb-2">
+            {language === 'es' 
+              ? 'Matriz de p-valores ajustados por comparaciones múltiples. Las celdas en verde indican una diferencia de rendimiento estadísticamente significativa (p < 0.05) entre ese par de modelos.'
+              : 'P-value matrix adjusted for multiple comparisons. Green cells indicate a statistically significant performance difference (p < 0.05) between that pair of models.'}
+          </p>
+
+          <div className="overflow-x-auto rounded-xl border border-card-border">
+            <table className="w-full text-center text-xs border-collapse">
+              <thead>
+                <tr className="bg-foreground/5 font-extrabold uppercase text-foreground/70">
+                  <th className="py-4 px-4 border-b border-r border-card-border">Modelos</th>
+                  {nemenyi.modelos.map((m: string) => (
+                    <th key={m} className="py-4 px-4 border-b border-card-border">{getFriendlyName(m)}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="font-medium text-foreground/80">
+                {nemenyi.modelos.map((mRow: string, idx: number) => (
+                  <tr key={mRow} className={idx % 2 === 0 ? 'bg-transparent' : 'bg-foreground/2'}>
+                    <td className="py-3 px-4 border-r border-card-border font-bold bg-foreground/5 text-left whitespace-nowrap">
+                      {getFriendlyName(mRow)}
+                    </td>
+                    {nemenyi.modelos.map((mCol: string) => {
+                      const pval = nemenyi.matriz_p_valores[mRow][mCol];
+                      const isSignificant = pval < 0.05 && mRow !== mCol;
+                      const isSame = mRow === mCol;
+                      
+                      return (
+                        <td key={mCol} className={`py-3 px-4 font-black transition-colors ${
+                          isSame ? 'bg-card-border/20 text-foreground/30' : 
+                          isSignificant ? 'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400' : 'text-foreground/50'
+                        }`}>
+                          {isSame ? '-' : pval < 0.001 ? '<0.001' : pval.toFixed(3)}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback if Nemenyi wasn't performed */}
+      {nemenyi && !nemenyi.realizado && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold text-center">
+          {nemenyi.razon || (language === 'es' ? 'Prueba post-hoc no aplicable.' : 'Post-hoc test not applicable.')}
+        </div>
+      )}
+      
     </div>
   );
 }

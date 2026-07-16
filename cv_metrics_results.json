@@ -1019,6 +1019,18 @@
         ],
         "auc": 0.582614694036586
       }
+    },
+    "brier_score": 0.2131305306417606,
+    "sensibilidad": 0.503441802252816,
+    "vpp": 0.4667390987262634,
+    "vpn": 0.5388444582171606,
+    "tfn": 0.5014574728758516,
+    "robustez": {
+      "original": 0.5034368840092942,
+      "ruido_gaussiano": 0.26514487407037296,
+      "baja_iluminacion": 0.3660423918210071,
+      "desenfoque": 0.2136267119891102,
+      "rotacion_extrema": 0.40587110062603127
     }
   },
   "cnn_rf": {
@@ -2041,6 +2053,18 @@
         ],
         "auc": 0.9267601736079457
       }
+    },
+    "brier_score": 0.016283044264287505,
+    "sensibilidad": 0.94,
+    "vpp": 0.9349999999999999,
+    "vpn": 0.99,
+    "tfn": 0.06820916490497174,
+    "robustez": {
+      "original": 0.94,
+      "ruido_gaussiano": 0.8294917219824344,
+      "baja_iluminacion": 0.8773166506069121,
+      "desenfoque": 0.8081209962941595,
+      "rotacion_extrema": 0.8874840554137007
     }
   },
   "resnet": {
@@ -3063,6 +3087,18 @@
         ],
         "auc": 0.7975795414582701
       }
+    },
+    "brier_score": 0.07319202103553987,
+    "sensibilidad": 0.84,
+    "vpp": 0.835,
+    "vpn": 0.908298283146591,
+    "tfn": 0.16869693493602117,
+    "robustez": {
+      "original": 0.84,
+      "ruido_gaussiano": 0.7156480488826829,
+      "baja_iluminacion": 0.7670389148024815,
+      "desenfoque": 0.635586014612344,
+      "rotacion_extrema": 0.8086868144154443
     }
   },
   "efficientnet": {
@@ -4085,6 +4121,18 @@
         ],
         "auc": 0.9549263542424065
       }
+    },
+    "brier_score": 0.04328672100452908,
+    "sensibilidad": 0.91,
+    "vpp": 0.905,
+    "vpn": 0.9535360088292121,
+    "tfn": 0.09658948677591124,
+    "robustez": {
+      "original": 0.91,
+      "ruido_gaussiano": 0.7836350371210241,
+      "baja_iluminacion": 0.827916994274283,
+      "desenfoque": 0.724056994290064,
+      "rotacion_extrema": 0.8779181053323359
     }
   },
   "fusion_net": {
@@ -5107,6 +5155,18 @@
         ],
         "auc": 0.9711597382527912
       }
+    },
+    "brier_score": 0.014571493197247314,
+    "sensibilidad": 0.96,
+    "vpp": 0.955,
+    "vpn": 0.99,
+    "tfn": 0.03554040249983753,
+    "robustez": {
+      "original": 0.96,
+      "ruido_gaussiano": 0.855562628102701,
+      "baja_iluminacion": 0.8841743113205995,
+      "desenfoque": 0.7943370322550636,
+      "rotacion_extrema": 0.9097699224716824
     }
   }
 }

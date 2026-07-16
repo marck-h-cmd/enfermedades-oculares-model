@@ -1,5 +1,14 @@
 export const translations = {
   es: {
+    clinicalValidation: "Validación Clínica Avanzada",
+    brierScore: "Brier Score (Calibración)",
+    brierDesc: "Mide qué tan confiables son las probabilidades del modelo (0 = perfecto, 1 = peor).",
+    clinicalMetrics: "Métricas de Riesgo Clínico Puro",
+    tfn: "Tasa de Falsos Negativos (Riesgo)",
+    ppv: "Valor Predictivo Positivo (VPP)",
+    npv: "Valor Predictivo Negativo (VPN)",
+    robustnessTitle: "Robustez ante Sesgos Ambientales (OOD)",
+    robustnessDesc: "Evalúa la caída de exactitud frente a ruidos, desenfoque y baja iluminación de la cámara.",
     title: "OcularDiagnose",
     subtitle: "Suite Clínica",
     connected: "Servidor API Conectado",
@@ -96,6 +105,15 @@ export const translations = {
     Variable: "Variable"
   },
   en: {
+    clinicalValidation: "Advanced Clinical Validation",
+    brierScore: "Brier Score (Calibration)",
+    brierDesc: "Measures how reliable model probabilities are (0 = perfect, 1 = worst).",
+    clinicalMetrics: "Pure Clinical Risk Metrics",
+    tfn: "False Negative Rate (Risk)",
+    ppv: "Positive Predictive Value (PPV)",
+    npv: "Negative Predictive Value (NPV)",
+    robustnessTitle: "Robustness to Environmental Biases (OOD)",
+    robustnessDesc: "Evaluates accuracy drop against camera noise, blur, and underexposure.",
     title: "OcularDiagnose",
     subtitle: "Clinical Suite",
     connected: "API Server Connected",
