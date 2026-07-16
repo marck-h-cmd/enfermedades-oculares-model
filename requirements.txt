@@ -8,7 +8,7 @@ Pillow
 opencv-python-headless
 matplotlib
 seaborn
-fpdf
+fpdf2
 scikit-learn
 scipy
 python-docx
@@ -17,3 +17,5 @@ fastapi
 uvicorn
 python-multipart
 pyjwt
+groq
+python-dotenv

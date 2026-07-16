@@ -7,7 +7,7 @@ import { translations } from '../i18n/translations';
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Title, Tooltip, Legend);
 
 interface AnalyticsTabProps {
-  language: 'es' | 'en';
+  language: 'es' | 'en' | 'pt' | 'fr' | 'zh';
   token: string;
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
 }

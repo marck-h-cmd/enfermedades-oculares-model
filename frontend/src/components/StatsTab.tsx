@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { translations } from '../i18n/translations';
 
 interface StatsTabProps {
-  language: 'es' | 'en';
+  language: 'es' | 'en' | 'pt' | 'fr' | 'zh';
   token: string;
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
 }

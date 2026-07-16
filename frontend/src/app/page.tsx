@@ -92,7 +92,7 @@ const Info = () => (
 export default function Home() {
   const [token, setToken] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const [language, setLanguage] = useState<'es' | 'en'>('es');
+  const [language, setLanguage] = useState<'es' | 'en' | 'pt' | 'fr' | 'zh'>('es');
   const [activeTab, setActiveTab] = useState<'diagnostico' | 'analytics' | 'estadisticas' | 'reportes'>('diagnostico');
   const [toasts, setToasts] = useState<{ id: number; message: string; type: 'success' | 'error' | 'info' }[]>([]);
   const [isMounted, setIsMounted] = useState(false);
@@ -231,8 +231,7 @@ export default function Home() {
 
         {/* User profile / settings / LogOut */}
         <div className="border-t border-card-border pt-4 flex flex-col gap-4">
-          <div className="flex justify-between items-center px-1">
-            <LanguageSelector language={language} setLanguage={handleLanguageChange} />
+          <div className="flex justify-end items-center px-1">
             <ThemeToggle />
           </div>
 
@@ -281,12 +280,15 @@ export default function Home() {
               </h1>
             </div>
             
-            <div className="flex items-center gap-3">
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="text-[10px] text-foreground/50 font-bold uppercase tracking-wider">{t.connected}</span>
+            <div className="flex items-center gap-4">
+              <LanguageSelector language={language} setLanguage={handleLanguageChange} />
+              <div className="flex items-center gap-2">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-[10px] text-foreground/50 font-bold uppercase tracking-wider">{t.connected}</span>
+              </div>
             </div>
           </header>
 
@@ -314,8 +316,8 @@ interface LoginProps {
   setToken: (token: string) => void;
   setUsername: (name: string) => void;
   showToast: (msg: string, type: 'success' | 'error') => void;
-  language: 'es' | 'en';
-  handleLanguageChange: (lang: 'es' | 'en') => void;
+  language: 'es' | 'en' | 'pt' | 'fr' | 'zh';
+  handleLanguageChange: (lang: 'es' | 'en' | 'pt' | 'fr' | 'zh') => void;
 }
 function LoginScreen({ setToken, setUsername, showToast, language, handleLanguageChange }: LoginProps) {
   const [userVal, setUserVal] = useState('');

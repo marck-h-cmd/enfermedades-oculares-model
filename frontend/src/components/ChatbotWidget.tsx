@@ -9,7 +9,7 @@ interface Message {
 }
 
 interface ChatbotWidgetProps {
-  language: 'es' | 'en';
+  language: 'es' | 'en' | 'pt' | 'fr' | 'zh';
   token: string;
 }
 
