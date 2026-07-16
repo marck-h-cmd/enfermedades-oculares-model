@@ -138,7 +138,13 @@ export default function AnalyticsTab({ language, token, showToast }: AnalyticsTa
 
   // Preparar datos para el gráfico Radar OOD (Robustez Ambiental)
   const robustnessData = {
-    labels: ['Limpieza Original', 'Ruido Gaussiano', 'Baja Iluminación', 'Desenfoque', 'Rotación Extrema'],
+    labels: [
+      t.oodOriginal || 'Limpieza Original', 
+      t.oodNoise || 'Ruido Gaussiano', 
+      t.oodIllumination || 'Baja Iluminación', 
+      t.oodBlur || 'Desenfoque', 
+      t.oodRotation || 'Rotación Extrema'
+    ],
     datasets: modelsData.map((m, index) => {
       const colors = [
         'rgba(99, 102, 241, 0.5)',  // Indigo

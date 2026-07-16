@@ -72,7 +72,7 @@ export default function StatsTab({ language, token, showToast }: StatsTabProps) 
       {friedman && (
         <div className={`glass-card rounded-3xl p-6 flex flex-col gap-4 border-2 ${friedman.significativo ? 'border-emerald-500/30' : 'border-card-border'}`}>
           <h3 className="font-bold text-foreground text-sm uppercase tracking-wide border-b border-card-border pb-3 flex items-center gap-2">
-            📊 {language === 'es' ? 'Test Global de Friedman (No Paramétrico)' : 'Global Friedman Test (Non-Parametric)'}
+            📊 {t.friedmanTitle || 'Global Friedman Test (Non-Parametric)'}
           </h3>
           
           <div className="flex flex-col md:flex-row items-center gap-6 p-4 bg-foreground/5 rounded-2xl">
@@ -85,13 +85,13 @@ export default function StatsTab({ language, token, showToast }: StatsTabProps) 
             
             <div className="flex-1">
               <p className="text-sm font-semibold text-foreground/80 mb-2">
-                {language === 'es' ? 'Interpretación:' : 'Interpretation:'}
+                {t.interpretation || 'Interpretation:'}
               </p>
               <p className="text-sm text-foreground/70 leading-relaxed italic border-l-4 border-indigo-500/50 pl-4">
-                {language === 'en' && friedman.significativo ? "There is a statistically significant difference in the overall performance of the models (p < 0.05)." : friedman.interpretacion}
+                {friedman.significativo ? t.friedmanSig : t.friedmanNotSig}
               </p>
               <div className="mt-3 inline-block px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-indigo-500/10 text-indigo-400">
-                {language === 'es' ? 'Estadístico:' : 'Statistic:'} {friedman.estadistico?.toFixed(2)}
+                {t.statisticLabel || 'Statistic:'} {friedman.estadistico?.toFixed(2)}
               </div>
             </div>
           </div>
@@ -102,19 +102,17 @@ export default function StatsTab({ language, token, showToast }: StatsTabProps) 
       {nemenyi && nemenyi.realizado && (
         <div className="glass-card rounded-3xl p-6 flex flex-col gap-4">
           <h3 className="font-bold text-foreground text-sm uppercase tracking-wide border-b border-card-border pb-3 flex items-center gap-2">
-            🎯 {language === 'es' ? 'Test Post-Hoc de Nemenyi (Diferencias Críticas)' : 'Nemenyi Post-Hoc Test (Critical Differences)'}
+            🎯 {t.nemenyiTitle || 'Nemenyi Post-Hoc Test (Critical Differences)'}
           </h3>
           <p className="text-xs text-foreground/60 leading-relaxed mb-2">
-            {language === 'es' 
-              ? 'Matriz de p-valores ajustados por comparaciones múltiples. Las celdas en verde indican una diferencia de rendimiento estadísticamente significativa (p < 0.05) entre ese par de modelos.'
-              : 'P-value matrix adjusted for multiple comparisons. Green cells indicate a statistically significant performance difference (p < 0.05) between that pair of models.'}
+            {t.nemenyiDesc || 'P-value matrix adjusted for multiple comparisons.'}
           </p>
 
           <div className="overflow-x-auto rounded-xl border border-card-border">
             <table className="w-full text-center text-xs border-collapse">
               <thead>
                 <tr className="bg-foreground/5 font-extrabold uppercase text-foreground/70">
-                  <th className="py-4 px-4 border-b border-r border-card-border">Modelos</th>
+                  <th className="py-4 px-4 border-b border-r border-card-border">{t.modelsLabel || 'Models'}</th>
                   {nemenyi.modelos.map((m: string) => (
                     <th key={m} className="py-4 px-4 border-b border-card-border">{getFriendlyName(m)}</th>
                   ))}
@@ -151,7 +149,7 @@ export default function StatsTab({ language, token, showToast }: StatsTabProps) 
       {/* Fallback if Nemenyi wasn't performed */}
       {nemenyi && !nemenyi.realizado && (
         <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs font-bold text-center">
-          {nemenyi.razon || (language === 'es' ? 'Prueba post-hoc no aplicable.' : 'Post-hoc test not applicable.')}
+          {t.posthocNotApplicable || 'Post-hoc test not applicable.'}
         </div>
       )}
       

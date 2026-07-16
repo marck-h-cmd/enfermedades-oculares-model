@@ -327,23 +327,26 @@ export default function DiagnosticTab({ language, token, showToast }: Diagnostic
               </div>
 
               <div className="bg-foreground/5 border border-card-border/40 rounded-2xl p-4 text-sm text-foreground/80 leading-relaxed">
-                {language === 'es' ? result.diagnostico_principal.descripcion : 
-                  `Clinical findings match the indicators of ${translateClass(result.diagnostico_principal.clase_id)}. Retinal structure analysis indicates an eye disease condition.`}
+                {language === 'es' 
+                  ? result.diagnostico_principal.descripcion 
+                  : (t as any).descFallback?.replace('[CLASS]', translateClass(result.diagnostico_principal.clase_id))}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 bg-foreground/3 border border-card-border/30 rounded-2xl">
                   <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide block mb-1">{t.treatment}</span>
                   <p className="text-xs text-foreground/80 font-semibold leading-relaxed">
-                    {language === 'es' ? result.diagnostico_principal.treatment || result.diagnostico_principal.tratamiento : 
-                      'Standard protocol dictates monitoring, lifestyle management, and referral to a specialist for direct therapeutic intervention.'}
+                    {language === 'es' 
+                      ? (result.diagnostico_principal.treatment || result.diagnostico_principal.tratamiento)
+                      : (t as any).treatmentFallback}
                   </p>
                 </div>
                 <div className="p-4 bg-foreground/3 border border-card-border/30 rounded-2xl">
                   <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide block mb-1">{t.prognosis}</span>
                   <p className="text-xs text-foreground/80 font-semibold leading-relaxed">
-                    {language === 'es' ? result.diagnostico_principal.pronostico : 
-                      'Highly dependent on early intervention and disease phase. Regular evaluations are key to visual preservation.'}
+                    {language === 'es' 
+                      ? result.diagnostico_principal.pronostico 
+                      : (t as any).prognosisFallback}
                   </p>
                 </div>
               </div>
