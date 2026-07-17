@@ -152,6 +152,54 @@ export default function StatsTab({ language, token, showToast }: StatsTabProps) 
           {t.posthocNotApplicable || 'Post-hoc test not applicable.'}
         </div>
       )}
+
+      {/* Robust Statistical Tests Section */}
+      {statsData?.pruebas_robustas && (
+        <div className="glass-card rounded-3xl p-6 flex flex-col gap-6">
+          <h3 className="font-bold text-foreground text-sm uppercase tracking-wide border-b border-card-border pb-3 flex items-center gap-2">
+            🛡️ {language === 'es' ? 'Pruebas Estadísticas Robustas Recomendadas' : 'Recommended Robust Statistical Tests'}
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.entries(statsData.pruebas_robustas).map(([key, value]: any) => (
+              <div key={key} className="p-4 rounded-2xl bg-foreground/3 border border-card-border/50 flex flex-col gap-2">
+                <div className="flex justify-between items-start gap-2">
+                  <h4 className="font-bold text-foreground text-xs">{value.prueba}</h4>
+                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                    value.significativo 
+                      ? 'bg-amber-500/10 text-amber-500' 
+                      : 'bg-emerald-500/10 text-emerald-500'
+                  }`}>
+                    {value.significativo ? 'Significativo' : 'Estable'}
+                  </span>
+                </div>
+                
+                <p className="text-xs text-foreground/70 italic leading-relaxed pl-2 border-l-2 border-indigo-500/50">
+                  {value.interpretacion}
+                </p>
+                
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {value.p_valor !== undefined && (
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-card-bg text-foreground/60 border border-card-border/30">
+                      p-val: {typeof value.p_valor === 'number' ? value.p_valor.toFixed(4) : value.p_valor}
+                    </span>
+                  )}
+                  {value.e_value_acumulado !== undefined && (
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-card-bg text-foreground/60 border border-card-border/30">
+                      E-val: {typeof value.e_value_acumulado === 'number' ? value.e_value_acumulado.toFixed(2) : value.e_value_acumulado}
+                    </span>
+                  )}
+                  {value.media_trimmed !== undefined && (
+                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-card-bg text-foreground/60 border border-card-border/30">
+                      Trimmed Mean: {value.media_trimmed.toFixed(3)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
     </div>
   );
