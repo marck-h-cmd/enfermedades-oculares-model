@@ -8,6 +8,56 @@ interface StatsTabProps {
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
 }
 
+// Helpers para validación estadística robusta
+const getSeverityGroup = (key: string) => {
+  if (key === 'lagrange_multiplier') return 'ALERTA';
+  if (key === 'mann_whitney' || key === 'pitman_morgan') return 'INFORMATIVO';
+  return 'ESTABLE';
+};
+
+const getRecommendation = (key: string, lang: string) => {
+  const isEs = lang === 'es';
+  switch (key) {
+    case 'lagrange_multiplier':
+      return isEs 
+        ? "Recomendación: evaluar desempeño segmentado por calidad de imagen/iluminación."
+        : "Recommendation: evaluate performance segmented by image quality/illumination.";
+    case 'pitman_morgan':
+      return isEs
+        ? "Recomendación: priorizar el modelo con menor varianza de error para mayor consistencia clínica."
+        : "Recommendation: prioritize the model with lower error variance for clinical consistency.";
+    case 'mann_whitney':
+      return isEs
+        ? "Recomendación: usar el modelo superior como base para producción."
+        : "Recommendation: use the superior model as the production baseline.";
+    default:
+      return isEs
+        ? "No se requiere acción adicional."
+        : "No additional action required.";
+  }
+};
+
+const getComparedModels = (key: string, lang: string) => {
+  const isEs = lang === 'es';
+  if (key === 'mann_whitney' || key === 'pitman_morgan') {
+    // TODO: Conectar dinámicamente con los nombres de modelos comparados desde el backend
+    return isEs 
+      ? "Modelos comparados: MobileNetV2 vs ResNet50V2" 
+      : "Compared models: MobileNetV2 vs ResNet50V2";
+  }
+  return null;
+};
+
+const formatPValue = (pval: any) => {
+  if (typeof pval === 'number') {
+    if (pval < 0.0001) {
+      return "< 0.0001";
+    }
+    return pval.toFixed(4);
+  }
+  return pval;
+};
+
 export default function StatsTab({ language, token, showToast }: StatsTabProps) {
   const t = translations[language];
   const [loading, setLoading] = useState(true);
@@ -160,44 +210,109 @@ export default function StatsTab({ language, token, showToast }: StatsTabProps) 
             🛡️ {language === 'es' ? 'Pruebas Estadísticas Robustas Recomendadas' : 'Recommended Robust Statistical Tests'}
           </h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(statsData.pruebas_robustas).map(([key, value]: any) => (
-              <div key={key} className="p-4 rounded-2xl bg-foreground/3 border border-card-border/50 flex flex-col gap-2">
-                <div className="flex justify-between items-start gap-2">
-                  <h4 className="font-bold text-foreground text-xs">{value.prueba}</h4>
-                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                    value.significativo 
-                      ? 'bg-amber-500/10 text-amber-500' 
-                      : 'bg-emerald-500/10 text-emerald-500'
-                  }`}>
-                    {value.significativo ? 'Significativo' : 'Estable'}
-                  </span>
+          {/* Grupos de Severidad */}
+          {[
+            {
+              id: 'ALERTA',
+              title: language === 'es' ? 'Requiere atención' : 'Attention Required',
+              desc: language === 'es' ? 'Errores de especificación y desviaciones críticas que requieren acción inmediata.' : 'Specification errors and critical deviations requiring action.',
+              titleClass: 'text-rose-500 dark:text-rose-400 font-extrabold flex items-center gap-2 text-xs uppercase tracking-wide',
+              bgClass: 'bg-rose-500/[0.02] border border-rose-500/10 p-4 rounded-2xl flex flex-col gap-4'
+            },
+            {
+              id: 'INFORMATIVO',
+              title: language === 'es' ? 'Hallazgos informativos' : 'Informational Findings',
+              desc: language === 'es' ? 'Información complementaria útil para facilitar la selección de modelos.' : 'Comparative metrics and logs to facilitate model selection.',
+              titleClass: 'text-blue-500 dark:text-blue-400 font-extrabold flex items-center gap-2 text-xs uppercase tracking-wide',
+              bgClass: 'bg-blue-500/[0.02] border border-blue-500/10 p-4 rounded-2xl flex flex-col gap-4'
+            },
+            {
+              id: 'ESTABLE',
+              title: language === 'es' ? 'Modelos estables' : 'Stable Models',
+              desc: language === 'es' ? 'Validaciones de consistencia aprobadas con éxito.' : 'Approved consistency checks and safety validations.',
+              titleClass: 'text-emerald-500 dark:text-emerald-400 font-extrabold flex items-center gap-2 text-xs uppercase tracking-wide',
+              bgClass: 'bg-emerald-500/[0.02] border border-emerald-500/10 p-4 rounded-2xl flex flex-col gap-4'
+            }
+          ].map(group => {
+            const groupTests = Object.entries(statsData.pruebas_robustas).filter(
+              ([key]: any) => getSeverityGroup(key) === group.id
+            );
+            
+            if (groupTests.length === 0) return null;
+            
+            return (
+              <div key={group.id} className={group.bgClass}>
+                <div className="border-b border-card-border pb-2">
+                  <h4 className={group.titleClass}>
+                    {group.id === 'ALERTA' ? '⚠️' : group.id === 'INFORMATIVO' ? 'ℹ️' : '✅'} {group.title}
+                  </h4>
+                  <p className="text-[10px] text-foreground/50 mt-0.5">{group.desc}</p>
                 </div>
                 
-                <p className="text-xs text-foreground/70 italic leading-relaxed pl-2 border-l-2 border-indigo-500/50">
-                  {value.interpretacion}
-                </p>
-                
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {value.p_valor !== undefined && (
-                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-card-bg text-foreground/60 border border-card-border/30">
-                      p-val: {typeof value.p_valor === 'number' ? value.p_valor.toFixed(4) : value.p_valor}
-                    </span>
-                  )}
-                  {value.e_value_acumulado !== undefined && (
-                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-card-bg text-foreground/60 border border-card-border/30">
-                      E-val: {typeof value.e_value_acumulado === 'number' ? value.e_value_acumulado.toFixed(2) : value.e_value_acumulado}
-                    </span>
-                  )}
-                  {value.media_trimmed !== undefined && (
-                    <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-card-bg text-foreground/60 border border-card-border/30">
-                      Trimmed Mean: {value.media_trimmed.toFixed(3)}
-                    </span>
-                  )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {groupTests.map(([key, value]: any) => {
+                    const compared = getComparedModels(key, language);
+                    const reco = getRecommendation(key, language);
+                    const isAlert = group.id === 'ALERTA';
+                    const isInfo = group.id === 'INFORMATIVO';
+                    
+                    return (
+                      <div key={key} className="p-4 rounded-2xl bg-foreground/3 border border-card-border flex flex-col gap-3 shadow-inner">
+                        <div className="flex justify-between items-start gap-2">
+                          <h5 className="font-bold text-foreground text-xs">{value.prueba}</h5>
+                          <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                            isAlert ? 'bg-rose-500/10 text-rose-500 dark:text-rose-400 border-rose-500/20' :
+                            isInfo ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400 border-blue-500/20' :
+                            'bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border-emerald-500/20'
+                          }`}>
+                            {isAlert ? (language === 'es' ? 'Alerta ⚠️' : 'Alert ⚠️') :
+                             isInfo ? (language === 'es' ? 'Informativo ℹ️' : 'Info ℹ️') :
+                             (language === 'es' ? 'Estable ✅' : 'Stable ✅')}
+                          </span>
+                        </div>
+                        
+                        {compared && (
+                          <p className="text-[10px] text-foreground/50 font-mono -mt-2">
+                            {compared}
+                          </p>
+                        )}
+                        
+                        <p className="text-xs text-foreground/70 italic leading-relaxed pl-2 border-l-2 border-indigo-500/30">
+                          {value.interpretacion}
+                        </p>
+                        
+                        <p className={`text-xs font-semibold leading-relaxed pl-2 border-l-2 ${
+                          isAlert ? 'border-rose-500/70 text-rose-500 dark:text-rose-400' :
+                          isInfo ? 'border-blue-500/70 text-blue-500 dark:text-blue-400' :
+                          'border-emerald-500/70 text-emerald-500 dark:text-emerald-400'
+                        }`}>
+                          {reco}
+                        </p>
+                        
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {value.p_valor !== undefined && (
+                            <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-card-bg text-foreground/60 border border-card-border/30">
+                              p-val: {formatPValue(value.p_valor)}
+                            </span>
+                          )}
+                          {value.e_value_acumulado !== undefined && (
+                            <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-card-bg text-foreground/60 border border-card-border/30">
+                              E-val: {typeof value.e_value_acumulado === 'number' ? value.e_value_acumulado.toFixed(2) : value.e_value_acumulado}
+                            </span>
+                          )}
+                          {value.media_trimmed !== undefined && (
+                            <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-card-bg text-foreground/60 border border-card-border/30">
+                              Trimmed Mean: {value.media_trimmed.toFixed(3)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       )}
       
