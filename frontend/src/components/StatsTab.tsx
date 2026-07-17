@@ -40,6 +40,7 @@ const getRecommendation = (key: string, lang: string) => {
 const getComparedModels = (key: string, value: any, lang: string) => {
   const isEs = lang === 'es';
   if (key === 'mann_whitney' || key === 'pitman_morgan') {
+    // TODO: Idealmente estas pruebas deberían poder mostrar cualquiera de los pares significativos de Nemenyi, seleccionable o rotando automáticamente, no solo uno fijo.
     const modelA = value?.modelo_a;
     const modelB = value?.modelo_b;
     
