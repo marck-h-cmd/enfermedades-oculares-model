@@ -1,4 +1,10 @@
 import os
+import sys
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
+except AttributeError:
+    pass
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -8,7 +14,7 @@ import pandas as pd
 import tensorflow as tf
 from keras import layers, Model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from keras.applications import MobileNetV2, EfficientNetB0, ResNet50V2
+from keras.applications import MobileNetV2, EfficientNetV2B0, ResNet50V2
 from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 import warnings
@@ -17,9 +23,7 @@ warnings.filterwarnings('ignore')
 import tensorflow as tf
 import sys
 if not tf.config.list_physical_devices('GPU'):
-    print("❌ ERROR CRÍTICO: No se detectó ninguna GPU compatible. Por regla estricta, el entrenamiento requiere GPU.")
-    print("Si estás en Windows nativo con Python 3.13, TensorFlow no soporta GPU. Usa WSL2 o Python 3.10 con DirectML.")
-    sys.exit(1)
+    print("⚠️ ADVERTENCIA: No se detectó ninguna GPU compatible. Se procederá a entrenar en CPU (será más lento).")
 else:
     # Desactivamos mixed_precision en el Ensemble porque causa un bug fatal de serialización JSON 
     # (<class 'EagerTensor'>) con las capas internas de EfficientNet en TF 2.10.
@@ -115,6 +119,7 @@ class EnsembleMedico:
             target_size=(self.alto_img, self.ancho_img),
             batch_size=self.tamaño_lote,
             class_mode='categorical',
+            classes=list(self.informacion_clases.keys()),
             subset='training',
             shuffle=True
         )
@@ -124,6 +129,7 @@ class EnsembleMedico:
             target_size=(self.alto_img, self.ancho_img),
             batch_size=self.tamaño_lote,
             class_mode='categorical',
+            classes=list(self.informacion_clases.keys()),
             subset='validation',
             shuffle=False
         )
@@ -149,7 +155,7 @@ class EnsembleMedico:
                 capa.trainable = False
                 
         elif arquitectura == 'efficientnet':
-            modelo_base = EfficientNetB0(
+            modelo_base = EfficientNetV2B0(
                 weights='imagenet',
                 include_top=False,
                 input_shape=(self.alto_img, self.ancho_img, 3)

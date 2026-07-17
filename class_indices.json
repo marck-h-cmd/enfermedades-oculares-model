@@ -1,0 +1,10 @@
+{
+  "ageDegeneration": 0,
+  "cataract": 1,
+  "diabetes": 2,
+  "glaucoma": 3,
+  "hypertension": 4,
+  "myopia": 5,
+  "normal": 6,
+  "others": 7
+}
