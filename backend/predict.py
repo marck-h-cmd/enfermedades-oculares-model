@@ -99,6 +99,69 @@ def encode_img_to_base64(img_np):
     img_str = base64.b64encode(buff.getvalue()).decode("utf-8")
     return f"data:image/jpeg;base64,{img_str}"
 
+def map_to_8_classes(prob):
+    """Mapea dinámicamente vectores de predicción de 10, 9 u 8 clases al formato estándar de 8 clases."""
+    if len(prob) == 8:
+        return prob
+        
+    clases_list = [
+        'ageDegeneration', 'cataract', 'diabetes', 'glaucoma', 
+        'hypertension', 'myopia', 'normal', 'others'
+    ]
+    
+    prob_8 = [0.0] * 8
+    
+    if len(prob) == 10:
+        # Mapeo del ensemble (10 clases de ODIR-5K/Dataset)
+        MAP_10_TO_8 = {
+            0: 'others',          # Central Serous
+            1: 'diabetes',        # Diabetic Retinopathy
+            2: 'others',          # Disc Edema
+            3: 'glaucoma',        # Glaucoma
+            4: 'normal',          # Healthy
+            5: 'others',          # Macular Scar
+            6: 'myopia',          # Myopia
+            7: 'others',          # Pterygium
+            8: 'others',          # Retinal Detachment
+            9: 'others'           # Retinitis Pigmentosa
+        }
+        for idx10, p in enumerate(prob):
+            class8 = MAP_10_TO_8.get(idx10, 'others')
+            idx8 = clases_list.index(class8)
+            prob_8[idx8] += p
+            
+    elif len(prob) == 9:
+        # Mapeo de modelos entrenados con carpeta 'preprocessed_images' extra (índice 8)
+        MAP_9_TO_8 = {
+            0: 'ageDegeneration',
+            1: 'cataract',
+            2: 'diabetes',
+            3: 'glaucoma',
+            4: 'hypertension',
+            5: 'myopia',
+            6: 'normal',
+            7: 'others',
+            8: 'others'  # preprocessed_images
+        }
+        for idx9, p in enumerate(prob):
+            class8 = MAP_9_TO_8.get(idx9, 'others')
+            idx8 = clases_list.index(class8)
+            prob_8[idx8] += p
+            
+    else:
+        # Fallback genérico truncando/rellenando
+        for i in range(min(len(prob), 8)):
+            prob_8[i] = prob[i]
+            
+    # Re-normalizar para asegurar que sumen 1.0
+    suma = sum(prob_8)
+    if suma > 0:
+        prob_8 = [p / suma for p in prob_8]
+    else:
+        prob_8 = [0.125] * 8
+        
+    return prob_8
+
 @router.post("/predict")
 async def predict(request: Request, file: UploadFile = File(...), user: str = Depends(get_current_user)):
     """
@@ -138,7 +201,7 @@ async def predict(request: Request, file: UploadFile = File(...), user: str = De
             try:
                 # Los modelos base suelen entrenarse con imágenes preprocesadas
                 prob = model.predict(img_clahe_norm, verbose=0)[0]
-                predicciones[model_name] = prob.tolist()
+                predicciones[model_name] = map_to_8_classes(prob.tolist())
             except Exception as e:
                 print(f"Error prediciendo en {model_name}: {str(e)}")
                 predicciones[model_name] = [0.125] * 8
@@ -162,10 +225,10 @@ async def predict(request: Request, file: UploadFile = File(...), user: str = De
                 # El extractor de características corre sobre la imagen norm
                 features = champion_model.predict(img_norm, verbose=0)
                 prob_rf = rf_classifier.predict_proba(features)[0]
-                predicciones["champion"] = prob_rf.tolist()
+                predicciones["champion"] = map_to_8_classes(prob_rf.tolist())
             else:
                 prob = champion_model.predict(img_norm, verbose=0)[0]
-                predicciones["champion"] = prob.tolist()
+                predicciones["champion"] = map_to_8_classes(prob.tolist())
         except Exception as e:
             print(f"Error prediciendo en Champion: {str(e)}")
             predicciones["champion"] = predicciones["ensemble"] # Fallback al ensemble

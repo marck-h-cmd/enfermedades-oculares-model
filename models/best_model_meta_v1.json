@@ -1,1 +1,4 @@
-{"tipo": "neural_network", "nombre": "mobilenet"}
+{
+  "tipo": "neural_network",
+  "nombre": "mobilenet"
+}

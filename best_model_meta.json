@@ -1,1 +1,4 @@
-{"tipo": "cnn_rf"}
+{
+  "tipo": "neural_network",
+  "nombre": "mobilenet"
+}

@@ -24,9 +24,7 @@ warnings.filterwarnings('ignore')
 import tensorflow as tf
 import sys
 if not tf.config.list_physical_devices('GPU'):
-    print("❌ ERROR CRÍTICO: No se detectó ninguna GPU compatible. Por regla estricta, el entrenamiento requiere GPU.")
-    print("Si estás en Windows nativo con Python 3.13, TensorFlow no soporta GPU. Usa WSL2 o Python 3.10 con DirectML.")
-    sys.exit(1)
+    print("⚠️ ADVERTENCIA: No se detectó ninguna GPU compatible. Se procederá a entrenar en CPU (será más lento).")
 else:
     # Habilitar mixed precision para exprimir la RTX 3050 (hace el entrenamiento más rápido y usa menos VRAM)
     try:
@@ -147,6 +145,7 @@ class EntrenadorEnfermedadesOculares:
             target_size=(self.alto_img, self.ancho_img),
             batch_size=self.tamaño_lote,
             class_mode='categorical',
+            classes=list(self.informacion_clases.keys()),
             subset='training',
             shuffle=True
         )
@@ -157,6 +156,7 @@ class EntrenadorEnfermedadesOculares:
             target_size=(self.alto_img, self.ancho_img),
             batch_size=self.tamaño_lote,
             class_mode='categorical',
+            classes=list(self.informacion_clases.keys()),
             subset='validation',
             shuffle=False
         )

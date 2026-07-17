@@ -52,8 +52,9 @@ class EntrenadorCrossValidation:
         formatos_soportados = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif'}
         datos = []
         
+        clases_excluidas = {'preprocessed_images', 'ODIR-5K'}
         for clase_dir in self.ruta_dataset.iterdir():
-            if clase_dir.is_dir() and not clase_dir.name.startswith('.'):
+            if clase_dir.is_dir() and not clase_dir.name.startswith('.') and clase_dir.name not in clases_excluidas:
                 for archivo in clase_dir.iterdir():
                     if archivo.is_file() and archivo.suffix.lower() in formatos_soportados:
                         datos.append({

@@ -5,13 +5,13 @@ echo =======================================================
 echo.
 
 echo [1/3] Iniciando Servidor Backend (FastAPI)...
-start "Backend OcularDiagnose" cmd /k ".\venv\Scripts\activate.bat && uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload"
+start "Backend OcularDiagnose" cmd /k ".\.venv\Scripts\activate.bat && uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload"
 
 echo [2/3] Iniciando Servidor Frontend (Next.js)...
 start "Frontend OcularDiagnose" cmd /k "cd frontend && npm run dev"
 
 echo [3/3] Iniciando Interfaz Streamlit (Dashboard Antiguo)...
-start "Streamlit OcularDiagnose" cmd /k ".\venv\Scripts\activate.bat && streamlit run app.py"
+start "Streamlit OcularDiagnose" cmd /k ".\.venv\Scripts\activate.bat && streamlit run app.py"
 
 echo.
 echo =======================================================
