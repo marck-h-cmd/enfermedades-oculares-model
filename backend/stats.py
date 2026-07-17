@@ -131,15 +131,21 @@ def get_statistics():
         trim_res = RobustStatisticalValidation.calcular_alpha_trimming(np.array(all_accs), alpha=0.1)
         
         # 3. Mann-Whitney U entre ResNet50V2 y MobileNetV2
-        resnet_acc = cv_data.get("resnet", {}).get("accuracies_folds", [0.91, 0.92, 0.94, 0.93, 0.92])
-        mobilenet_acc = cv_data.get("mobilenet", {}).get("accuracies_folds", [0.89, 0.90, 0.91, 0.88, 0.92])
+        modelo_a_id = "resnet"
+        modelo_b_id = "mobilenet"
+        resnet_acc = cv_data.get(modelo_a_id, {}).get("accuracies_folds", [0.91, 0.92, 0.94, 0.93, 0.92])
+        mobilenet_acc = cv_data.get(modelo_b_id, {}).get("accuracies_folds", [0.89, 0.90, 0.91, 0.88, 0.92])
         mw_res = RobustStatisticalValidation.test_mann_whitney_u(resnet_acc, mobilenet_acc)
+        mw_res["modelo_a"] = modelo_a_id
+        mw_res["modelo_b"] = modelo_b_id
         
         # 4. Pitman-Morgan (Varianza de errores)
         # Expandir la longitud para lograr validez en la prueba t de Student
         err_res = [1.0 - a for a in resnet_acc] * 20
         err_mob = [1.0 - a for a in mobilenet_acc] * 20
         pm_res = RobustStatisticalValidation.test_pitman_morgan_varianzas(err_res, err_mob)
+        pm_res["modelo_a"] = modelo_a_id
+        pm_res["modelo_b"] = modelo_b_id
         
         # 5. Lagrange Multiplier BP (Especificación ante heterocedasticidad)
         preds = np.random.uniform(low=0.1, high=0.9, size=200)

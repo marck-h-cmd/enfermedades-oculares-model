@@ -37,13 +37,30 @@ const getRecommendation = (key: string, lang: string) => {
   }
 };
 
-const getComparedModels = (key: string, lang: string) => {
+const getComparedModels = (key: string, value: any, lang: string) => {
   const isEs = lang === 'es';
   if (key === 'mann_whitney' || key === 'pitman_morgan') {
-    // TODO: Conectar dinámicamente con los nombres de modelos comparados desde el backend
+    const modelA = value?.modelo_a;
+    const modelB = value?.modelo_b;
+    
+    // Función para obtener nombre amigable en el componente React
+    const getFriendlyName = (id: string) => {
+      const names: Record<string, string> = {
+        'mobilenet': 'MobileNetV2',
+        'resnet': 'ResNet50V2',
+        'efficientnet': 'EfficientNetV2',
+        'fusion_net': 'Fusión ResNet+MobileNet',
+        'cnn_rf': 'CNN + Random Forest'
+      };
+      return names[id] || id;
+    };
+    
+    const nameA = modelA ? getFriendlyName(modelA) : 'N/A';
+    const nameB = modelB ? getFriendlyName(modelB) : 'N/A';
+    
     return isEs 
-      ? "Modelos comparados: MobileNetV2 vs ResNet50V2" 
-      : "Compared models: MobileNetV2 vs ResNet50V2";
+      ? `Modelos comparados: ${nameA} vs ${nameB}` 
+      : `Compared models: ${nameA} vs ${nameB}`;
   }
   return null;
 };
@@ -251,7 +268,7 @@ export default function StatsTab({ language, token, showToast }: StatsTabProps) 
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {groupTests.map(([key, value]: any) => {
-                    const compared = getComparedModels(key, language);
+                    const compared = getComparedModels(key, value, language);
                     const reco = getRecommendation(key, language);
                     const isAlert = group.id === 'ALERTA';
                     const isInfo = group.id === 'INFORMATIVO';
