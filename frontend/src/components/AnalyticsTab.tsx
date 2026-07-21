@@ -319,7 +319,9 @@ export default function AnalyticsTab({ language, token, showToast }: AnalyticsTa
                     angleLines: { color: 'rgba(150,150,150,0.2)' },
                     grid: { color: 'rgba(150,150,150,0.1)' },
                     pointLabels: { color: '#9ca3af', font: { size: 10, weight: 'bold' } },
-                    ticks: { display: false, min: 0, max: 1 }
+                    min: 0,
+                    max: 1,
+                    ticks: { display: false }
                   }
                 },
                 plugins: {

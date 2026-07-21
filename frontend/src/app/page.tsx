@@ -101,7 +101,7 @@ export default function Home() {
     setIsMounted(true);
     setToken(localStorage.getItem('jwt_token'));
     setUsername(localStorage.getItem('username'));
-    const savedLang = localStorage.getItem('language') as 'es' | 'en' | null;
+    const savedLang = localStorage.getItem('language') as 'es' | 'en' | 'pt' | 'fr' | 'zh' | null;
     if (savedLang) setLanguage(savedLang);
   }, []);
 
@@ -113,7 +113,7 @@ export default function Home() {
     }, 4000);
   };
 
-  const handleLanguageChange = (lang: 'es' | 'en') => {
+  const handleLanguageChange = (lang: 'es' | 'en' | 'pt' | 'fr' | 'zh') => {
     setLanguage(lang);
     localStorage.setItem('language', lang);
   };
